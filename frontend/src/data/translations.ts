@@ -19,9 +19,16 @@ export const translations = {
       title: 'Latest Products',
       viewAll: 'View All Products',
       addToQuote: 'Add to Quote',
+      addToCart: 'Add to Cart',
+      viewDetails: 'View Details',
       technicalData: 'Technical Data',
       origin: 'Origin',
-      category: 'Category'
+      category: 'Category',
+      finish: 'Finish',
+      thickness: 'Thickness',
+      quantity: 'Quantity',
+      price: 'Price',
+      total: 'Total'
     },
     about: {
       title: 'About Persian Stone Nexus',

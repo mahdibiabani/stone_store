@@ -1,9 +1,9 @@
+import { Menu, Mountain, ShoppingCart, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Menu, X, Mountain, ShoppingCart } from 'lucide-react';
-import LanguageToggle from './LanguageToggle';
-import { useLanguage } from '../hooks/useLanguage';
 import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
+import { useLanguage } from '../hooks/useLanguage';
+import LanguageToggle from './LanguageToggle';
 
 interface HeaderProps {
   onCartClick: () => void;
@@ -105,7 +105,6 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
                 <a
                   key={item.key}
                   href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
                   onClick={(e) => {
                     e.preventDefault();
                     setIsMenuOpen(false);
@@ -140,7 +139,6 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
                 </button>
                 <a
                   href="#quote"
-                  onClick={() => setIsMenuOpen(false)}
                   onClick={(e) => {
                     e.preventDefault();
                     setIsMenuOpen(false);
