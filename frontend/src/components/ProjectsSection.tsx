@@ -1,8 +1,13 @@
+import { Building, Calendar, ExternalLink, MapPin } from 'lucide-react';
 import React from 'react';
-import { ExternalLink, Calendar, MapPin, Building } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 
-const ProjectsSection: React.FC = () => {
+interface ProjectsSectionProps {
+  onViewAllProjects: () => void;
+  onViewProject: (project: any) => void;
+}
+
+const ProjectsSection: React.FC<ProjectsSectionProps> = ({ onViewAllProjects, onViewProject }) => {
   const { language } = useLanguage();
 
   const projects = [
@@ -105,7 +110,7 @@ const ProjectsSection: React.FC = () => {
             {language === 'fa' ? 'پروژه‌های ما' : 'Our Projects'}
           </h2>
           <p className="text-xl text-stone-600 max-w-3xl mx-auto font-persian">
-            {language === 'fa' 
+            {language === 'fa'
               ? 'نمونه‌ای از پروژه‌های موفق ما در سراسر جهان با استفاده از بهترین سنگ‌های طبیعی ایران'
               : 'Showcase of our successful projects worldwide using the finest Iranian natural stones'
             }
@@ -124,7 +129,7 @@ const ProjectsSection: React.FC = () => {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
+
                 {/* Category Badge */}
                 <div className="absolute top-4 left-4 rtl:left-auto rtl:right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-stone-800">
                   {project.category[language]}
@@ -182,7 +187,10 @@ const ProjectsSection: React.FC = () => {
 
                 {/* View Project Button */}
                 <div className="pt-4">
-                  <button className="w-full bg-stone-800 text-white py-3 rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold font-persian transform hover:-translate-y-1 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 rtl:space-x-reverse">
+                  <button
+                    onClick={() => onViewProject(project)}
+                    className="w-full bg-stone-800 text-white py-3 rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold font-persian transform hover:-translate-y-1 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 rtl:space-x-reverse"
+                  >
                     <span>{language === 'fa' ? 'مشاهده پروژه' : 'View Project'}</span>
                     <ExternalLink className="w-4 h-4" />
                   </button>
@@ -194,7 +202,10 @@ const ProjectsSection: React.FC = () => {
 
         {/* View All Projects Button */}
         <div className="text-center mt-12">
-          <button className="inline-flex items-center px-8 py-4 bg-stone-800 text-white rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold text-lg group transform hover:-translate-y-1 shadow-lg hover:shadow-xl font-persian">
+          <button
+            onClick={onViewAllProjects}
+            className="inline-flex items-center px-8 py-4 bg-stone-800 text-white rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold text-lg group transform hover:-translate-y-1 shadow-lg hover:shadow-xl font-persian"
+          >
             {language === 'fa' ? 'مشاهده همه پروژه‌ها' : 'View All Projects'}
             <ExternalLink className="ml-2 rtl:ml-0 rtl:mr-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>

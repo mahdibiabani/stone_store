@@ -1,5 +1,6 @@
-import { Menu, Mountain, ShoppingCart, X } from 'lucide-react';
-import React, { useState } from 'react';
+import { LogOut, Menu, Mountain, ShoppingCart, User, UserCircle, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
@@ -7,13 +8,18 @@ import LanguageToggle from './LanguageToggle';
 
 interface HeaderProps {
   onCartClick: () => void;
+  onProfileClick?: () => void;
+  onLoginClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
+const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { language } = useLanguage();
   const t = translations[language];
   const { getCartItemsCount } = useCart();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { key: 'home', href: '#hero' },
@@ -22,6 +28,34 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
     { key: 'about', href: '#about' },
     { key: 'contact', href: '#contact' }
   ];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleProfileClick = () => {
+    setIsProfileDropdownOpen(false);
+    if (user) {
+      onProfileClick?.();
+    } else {
+      onLoginClick?.();
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setIsProfileDropdownOpen(false);
+  };
 
   return (
     <header className="bg-warm-50/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-warm-200/50">
@@ -66,9 +100,72 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
             ))}
           </nav>
 
-          {/* Right side - Language toggle and CTA */}
+          {/* Right side - Language toggle, Profile, Cart and CTA */}
           <div className="hidden md:flex items-center space-x-4 rtl:space-x-reverse">
             <LanguageToggle />
+
+            {/* Profile Icon */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                className="relative p-2 text-stone-600 hover:text-stone-800 transition-colors bg-white rounded-lg shadow-sm hover:shadow-md"
+              >
+                {user ? (
+                  <UserCircle className="w-6 h-6" />
+                ) : (
+                  <User className="w-6 h-6" />
+                )}
+              </button>
+
+              {/* Profile Dropdown */}
+              {isProfileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
+                  {user ? (
+                    <>
+                      <div className="px-4 py-2 border-b border-stone-100">
+                        <p className="text-sm font-medium text-stone-800 font-persian">
+                          {user.name || user.email}
+                        </p>
+                        <p className="text-xs text-stone-500">{user.email}</p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleProfileClick();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
+                      >
+                        <UserCircle className="w-4 h-4" />
+                        <span className="font-persian">
+                          {language === 'fa' ? 'پروفایل' : 'Profile'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span className="font-persian">
+                          {language === 'fa' ? 'خروج' : 'Logout'}
+                        </span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={handleProfileClick}
+                      className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="font-persian">
+                        {language === 'fa' ? 'ورود / ثبت نام' : 'Login / Register'}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={onCartClick}
               className="relative p-2 text-stone-600 hover:text-stone-800 transition-colors bg-white rounded-lg shadow-sm hover:shadow-md"
@@ -123,6 +220,19 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
               ))}
               <div className="flex items-center justify-between px-2 pt-4 border-t border-stone-200">
                 <LanguageToggle />
+                <button
+                  onClick={() => {
+                    handleProfileClick();
+                    setIsMenuOpen(false);
+                  }}
+                  className="relative p-2 text-stone-600 hover:text-stone-800 transition-colors bg-white rounded-lg shadow-sm"
+                >
+                  {user ? (
+                    <UserCircle className="w-6 h-6" />
+                  ) : (
+                    <User className="w-6 h-6" />
+                  )}
+                </button>
                 <button
                   onClick={() => {
                     onCartClick();
