@@ -97,13 +97,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (error instanceof Error) {
                 const originalError = error.message.toLowerCase();
                 
-                // Map common Django authentication errors to user-friendly messages
-                if (originalError.includes('unable to log in') || originalError.includes('invalid credentials') || originalError.includes('incorrect')) {
+                // Handle network/connection errors first
+                if (originalError.includes('failed to fetch') || originalError.includes('network error') || originalError.includes('fetch')) {
+                    errorMessage = 'خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید'; // Persian: Server connection error. Please check your internet connection
+                } else if (originalError.includes('unable to log in') || originalError.includes('invalid credentials') || originalError.includes('incorrect')) {
                     errorMessage = 'نام کاربری یا رمز عبور نادرست است'; // Persian: Username or password is incorrect
                 } else if (originalError.includes('user account is disabled')) {
                     errorMessage = 'حساب کاربری غیرفعال است'; // Persian: User account is disabled
                 } else if (originalError.includes('this field may not be blank') || originalError.includes('required')) {
                     errorMessage = 'لطفا تمام فیلدهای ضروری را پر کنید'; // Persian: Please fill all required fields
+                } else if (originalError.includes('http error') && originalError.includes('500')) {
+                    errorMessage = 'خطا در سرور. لطفا بعداً تلاش کنید'; // Persian: Server error. Please try again later
+                } else if (originalError.includes('http error') && originalError.includes('404')) {
+                    errorMessage = 'سرویس ورود در دسترس نیست'; // Persian: Login service is not available
                 } else {
                     // For other errors, show the original message if it's user-friendly, otherwise show generic message
                     errorMessage = originalError.length < 100 ? error.message : 'خطا در ورود به سیستم'; // Persian: Login error
@@ -142,8 +148,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (error instanceof Error) {
                 const originalError = error.message.toLowerCase();
                 
-                // Map common Django registration errors to user-friendly messages
-                if (originalError.includes('user with this email already exists') || originalError.includes('already exists')) {
+                // Handle network/connection errors first
+                if (originalError.includes('failed to fetch') || originalError.includes('network error') || originalError.includes('fetch')) {
+                    errorMessage = 'خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید'; // Persian: Server connection error. Please check your internet connection
+                } else if (originalError.includes('user with this email already exists') || originalError.includes('already exists')) {
                     errorMessage = 'کاربری با این ایمیل قبلاً ثبت نام کرده است'; // Persian: User with this email already registered
                 } else if (originalError.includes('username') && originalError.includes('already exists')) {
                     errorMessage = 'این ایمیل قبلاً استفاده شده است'; // Persian: This email has already been used
@@ -161,6 +169,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     errorMessage = 'لطفا نام خود را وارد کنید'; // Persian: Please enter your name
                 } else if (originalError.includes('username')) {
                     errorMessage = 'مشکلی در نام کاربری وجود دارد'; // Persian: There's an issue with the username
+                } else if (originalError.includes('http error') && originalError.includes('500')) {
+                    errorMessage = 'خطا در سرور. لطفا بعداً تلاش کنید'; // Persian: Server error. Please try again later
+                } else if (originalError.includes('http error') && originalError.includes('404')) {
+                    errorMessage = 'سرویس ثبت نام در دسترس نیست'; // Persian: Registration service is not available
                 } else {
                     // For other errors, show the original message if it's user-friendly, otherwise show generic message
                     errorMessage = originalError.length < 100 ? error.message : 'خطا در ثبت نام'; // Persian: Registration error

@@ -21,7 +21,6 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
 
     const { login, register } = useAuth();
     const { language } = useLanguage();
-    const t = translations[language];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,7 +55,20 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
                 setError(result.error || (language === 'fa' ? 'خطایی رخ داد' : 'An error occurred'));
             }
         } catch (error) {
-            setError(language === 'fa' ? 'خطایی رخ داد' : 'An error occurred');
+            // Handle unexpected errors (like network issues)
+            if (error instanceof Error) {
+                const errorMsg = error.message.toLowerCase();
+                if (errorMsg.includes('failed to fetch') || errorMsg.includes('network error') || errorMsg.includes('fetch')) {
+                    setError(language === 'fa' 
+                        ? 'خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید'
+                        : 'Server connection error. Please check your internet connection'
+                    );
+                } else {
+                    setError(language === 'fa' ? 'خطایی رخ داد' : 'An error occurred');
+                }
+            } else {
+                setError(language === 'fa' ? 'خطایی رخ داد' : 'An error occurred');
+            }
         } finally {
             setLoading(false);
         }
