@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
+from django.utils.html import format_html
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from .models import (
     UserProfile, Category, Stone, StoneImage, StoneVideo, Project, ProjectImage, 
     ProjectVideo, ProjectStone, Cart, CartItem, Quote, QuoteItem, Order, OrderItem
@@ -29,29 +32,56 @@ class StoneVideoInline(admin.TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name_en', 'name_fa', 'slug', 'created_at']
+    list_display = ['name_display', 'slug', 'created_at']
     search_fields = ['name_en', 'name_fa']
     prepopulated_fields = {'slug': ('name_en',)}
+    
+    def name_display(self, obj):
+        return format_html(
+            '<div style="direction: ltr; text-align: left;">{}</div>'
+            '<div style="direction: rtl; text-align: right; font-family: Vazir, Tahoma, Arial;">{}</div>',
+            obj.name_en,
+            obj.name_fa
+        )
+    name_display.short_description = 'Name (EN/FA)'
 
 
 @admin.register(Stone)
 class StoneAdmin(admin.ModelAdmin):
-    list_display = ['name_en', 'category', 'origin', 'price', 'is_active', 'created_at']
+    list_display = ['name_display', 'category', 'origin', 'price_display', 'is_active', 'created_at']
     list_filter = ['category', 'origin', 'is_active', 'created_at']
     search_fields = ['name_en', 'name_fa', 'description_en', 'description_fa']
     inlines = [StoneImageInline, StoneVideoInline]
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name_en', 'name_fa', 'category', 'description_en', 'description_fa')
+            'fields': ('name_en', 'name_fa', 'category', 'description_en', 'description_fa'),
+            'description': 'Enter the stone name and description in both English and Persian'
         }),
         ('Details', {
             'fields': ('origin', 'price', 'is_active')
         }),
         ('Technical Data', {
             'fields': ('density', 'porosity', 'compressive_strength', 'flexural_strength'),
-            'classes': ('collapse',)
+            'classes': ('collapse',),
+            'description': 'Technical specifications of the stone'
         }),
     )
+    
+    def name_display(self, obj):
+        return format_html(
+            '<div style="direction: ltr; text-align: left; margin-bottom: 5px;"><strong>EN:</strong> {}</div>'
+            '<div style="direction: rtl; text-align: right; font-family: Vazir, Tahoma, Arial;"><strong>فا:</strong> {}</div>',
+            obj.name_en,
+            obj.name_fa
+        )
+    name_display.short_description = 'Name'
+    
+    def price_display(self, obj):
+        return format_html(
+            '<span style="color: #28a745; font-weight: bold;">${:,.2f}</span>',
+            obj.price
+        )
+    price_display.short_description = 'Price'
 
 
 class ProjectImageInline(admin.TabularInline):
@@ -71,13 +101,14 @@ class ProjectStoneInline(admin.TabularInline):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['title_en', 'category_en', 'year', 'location_en', 'is_active', 'created_at']
+    list_display = ['title_display', 'category_display', 'year', 'location_display', 'is_active', 'created_at']
     list_filter = ['category_en', 'year', 'is_active', 'created_at']
     search_fields = ['title_en', 'title_fa', 'description_en', 'description_fa']
     inlines = [ProjectImageInline, ProjectVideoInline, ProjectStoneInline]
     fieldsets = (
         ('Basic Information', {
-            'fields': ('title_en', 'title_fa', 'description_en', 'description_fa')
+            'fields': ('title_en', 'title_fa', 'description_en', 'description_fa'),
+            'description': 'Project title and description in both languages'
         }),
         ('Project Details', {
             'fields': ('location_en', 'location_fa', 'year', 'category_en', 'category_fa')
@@ -94,6 +125,33 @@ class ProjectAdmin(admin.ModelAdmin):
             'fields': ('is_active',)
         }),
     )
+    
+    def title_display(self, obj):
+        return format_html(
+            '<div style="direction: ltr; text-align: left; margin-bottom: 3px;"><strong>EN:</strong> {}</div>'
+            '<div style="direction: rtl; text-align: right; font-family: Vazir, Tahoma, Arial;"><strong>فا:</strong> {}</div>',
+            obj.title_en,
+            obj.title_fa
+        )
+    title_display.short_description = 'Title'
+    
+    def category_display(self, obj):
+        return format_html(
+            '<div style="direction: ltr; text-align: left; margin-bottom: 3px;">{}</div>'
+            '<div style="direction: rtl; text-align: right; font-family: Vazir, Tahoma, Arial;">{}</div>',
+            obj.category_en,
+            obj.category_fa
+        )
+    category_display.short_description = 'Category'
+    
+    def location_display(self, obj):
+        return format_html(
+            '<div style="direction: ltr; text-align: left; margin-bottom: 3px;">{}</div>'
+            '<div style="direction: rtl; text-align: right; font-family: Vazir, Tahoma, Arial;">{}</div>',
+            obj.location_en,
+            obj.location_fa
+        )
+    location_display.short_description = 'Location'
 
 
 class CartItemInline(admin.TabularInline):
