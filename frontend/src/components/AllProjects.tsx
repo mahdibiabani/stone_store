@@ -3,55 +3,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
+import { Project } from '../hooks/useData';
 import ConfirmationModal from './ConfirmationModal';
 import LanguageToggle from './LanguageToggle';
 
-interface Project {
-    id: number;
-    title: {
-        en: string;
-        fa: string;
-    };
-    description: {
-        en: string;
-        fa: string;
-    };
-    location: {
-        en: string;
-        fa: string;
-    };
-    year: string;
-    category: {
-        en: string;
-        fa: string;
-    };
-    stones: string[];
-    image: string;
-    gallery?: string[];
-    video?: string;
-    client?: {
-        en: string;
-        fa: string;
-    };
-    size?: {
-        en: string;
-        fa: string;
-    };
-    duration?: {
-        en: string;
-        fa: string;
-    };
-    challenges?: {
-        en: string;
-        fa: string;
-    };
-    solutions?: {
-        en: string;
-        fa: string;
-    };
-}
-
 interface AllProjectsProps {
+    projects: Project[];
     onBack: () => void;
     onViewProject: (project: Project) => void;
     onCartClick?: () => void;
@@ -60,7 +17,7 @@ interface AllProjectsProps {
     onHomeClick?: () => void;
 }
 
-const AllProjects: React.FC<AllProjectsProps> = ({ onBack, onViewProject, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
+const AllProjects: React.FC<AllProjectsProps> = ({ projects, onBack, onViewProject, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
     const { language } = useLanguage();
     const { user, logout } = useAuth();
     const { getCartItemsCount } = useCart();
@@ -121,181 +78,6 @@ const AllProjects: React.FC<AllProjectsProps> = ({ onBack, onViewProject, onCart
         }
     };
 
-    const projects: Project[] = [
-        {
-            id: 1,
-            title: {
-                en: 'Luxury Hotel Tehran',
-                fa: 'هتل لوکس تهران'
-            },
-            description: {
-                en: 'Premium marble installation for 5-star hotel lobby and suites',
-                fa: 'نصب مرمر ممتاز برای لابی و سوئیت‌های هتل ۵ ستاره'
-            },
-            location: {
-                en: 'Tehran, Iran',
-                fa: 'تهران، ایران'
-            },
-            year: '2024',
-            category: {
-                en: 'Hospitality',
-                fa: 'هتلداری'
-            },
-            stones: ['Royal Onyx', 'Silver Marble'],
-            image: 'https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg?auto=compress&cs=tinysrgb&w=800',
-            gallery: [
-                'https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg?auto=compress&cs=tinysrgb&w=800',
-                'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
-            ],
-            video: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-            client: {
-                en: 'Tehran Grand Hotel Group',
-                fa: 'گروه هتل‌های بزرگ تهران'
-            },
-            size: {
-                en: '15,000 m²',
-                fa: '۱۵,۰۰۰ متر مربع'
-            },
-            duration: {
-                en: '18 months',
-                fa: '۱۸ ماه'
-            },
-            challenges: {
-                en: 'Large-scale marble installation in a busy hotel environment with strict timeline requirements and high-end finish standards.',
-                fa: 'نصب مرمر در مقیاس بزرگ در محیط شلوغ هتل با الزامات زمانی سخت و استانداردهای پرداخت سطح بالا.'
-            },
-            solutions: {
-                en: 'Implemented phased installation approach with specialized teams and premium quality control measures to ensure flawless execution.',
-                fa: 'اجرای رویکرد نصب مرحله‌ای با تیم‌های تخصصی و اقدامات کنترل کیفیت ممتاز برای اطمینان از اجرای بی‌نقص.'
-            }
-        },
-        {
-            id: 2,
-            title: {
-                en: 'Modern Villa Dubai',
-                fa: 'ویلای مدرن دبی'
-            },
-            description: {
-                en: 'Travertine flooring and wall cladding for luxury residential project',
-                fa: 'کفپوش و نمای تراورتن برای پروژه مسکونی لوکس'
-            },
-            location: {
-                en: 'Dubai, UAE',
-                fa: 'دبی، امارات'
-            },
-            year: '2023',
-            category: {
-                en: 'Residential',
-                fa: 'مسکونی'
-            },
-            stones: ['Persian Travertine'],
-            image: 'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
-        },
-        {
-            id: 3,
-            title: {
-                en: 'Corporate Headquarters',
-                fa: 'دفتر مرکزی شرکت'
-            },
-            description: {
-                en: 'Elegant stone facade and interior design for multinational company',
-                fa: 'نمای سنگی زیبا و طراحی داخلی برای شرکت چندملیتی'
-            },
-            location: {
-                en: 'Istanbul, Turkey',
-                fa: 'استانبول، ترکیه'
-            },
-            year: '2023',
-            category: {
-                en: 'Commercial',
-                fa: 'تجاری'
-            },
-            stones: ['Silver Marble', 'Royal Onyx'],
-            image: 'https://images.pexels.com/photos/325229/pexels-photo-325229.jpeg?auto=compress&cs=tinysrgb&w=800',
-            gallery: [
-                'https://images.pexels.com/photos/325229/pexels-photo-325229.jpeg?auto=compress&cs=tinysrgb&w=800',
-                'https://images.pexels.com/photos/2467558/pexels-photo-2467558.jpeg?auto=compress&cs=tinysrgb&w=800'
-            ],
-            client: {
-                en: 'Global Tech Solutions',
-                fa: 'راه‌حل‌های فناوری جهانی'
-            },
-            size: {
-                en: '8,500 m²',
-                fa: '۸,۵۰۰ متر مربع'
-            },
-            duration: {
-                en: '12 months',
-                fa: '۱۲ ماه'
-            }
-        },
-        {
-            id: 4,
-            title: {
-                en: 'Shopping Mall Complex',
-                fa: 'مجتمع تجاری'
-            },
-            description: {
-                en: 'Large-scale stone installation for premium shopping destination',
-                fa: 'نصب سنگ در مقیاس بزرگ برای مرکز خرید ممتاز'
-            },
-            location: {
-                en: 'Doha, Qatar',
-                fa: 'دوحه، قطر'
-            },
-            year: '2022',
-            category: {
-                en: 'Retail',
-                fa: 'خرده‌فروشی'
-            },
-            stones: ['Persian Travertine', 'Silver Marble'],
-            image: 'https://images.pexels.com/photos/2467558/pexels-photo-2467558.jpeg?auto=compress&cs=tinysrgb&w=800'
-        },
-        {
-            id: 5,
-            title: {
-                en: 'Cultural Center',
-                fa: 'مرکز فرهنگی'
-            },
-            description: {
-                en: 'Artistic stone work for modern cultural and exhibition space',
-                fa: 'کار سنگی هنری برای فضای فرهنگی و نمایشگاهی مدرن'
-            },
-            location: {
-                en: 'Shiraz, Iran',
-                fa: 'شیراز، ایران'
-            },
-            year: '2024',
-            category: {
-                en: 'Cultural',
-                fa: 'فرهنگی'
-            },
-            stones: ['Royal Onyx', 'Persian Travertine'],
-            image: 'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
-        },
-        {
-            id: 6,
-            title: {
-                en: 'Luxury Resort',
-                fa: 'منتجع لوکس'
-            },
-            description: {
-                en: 'Premium stone finishes for exclusive beachfront resort',
-                fa: 'پرداخت‌های سنگی ممتاز برای منتجع ساحلی انحصاری'
-            },
-            location: {
-                en: 'Antalya, Turkey',
-                fa: 'آنتالیا، ترکیه'
-            },
-            year: '2023',
-            category: {
-                en: 'Hospitality',
-                fa: 'هتلداری'
-            },
-            stones: ['Silver Marble', 'Persian Travertine'],
-            image: 'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=800'
-        }
-    ];
 
     // Get unique categories and years
     const categories = useMemo(() => {

@@ -1,7 +1,6 @@
 import { ArrowLeft, Grid, List, LogOut, Mountain, Search, ShoppingCart, User, UserCircle } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { stones } from '../data/stones';
 import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
@@ -11,6 +10,7 @@ import LanguageToggle from './LanguageToggle';
 import ProductCard from './ProductCard';
 
 interface AllProductsProps {
+    stones: Stone[];
     onBack: () => void;
     onViewProduct: (stone: Stone) => void;
     onCartClick: () => void;
@@ -19,7 +19,7 @@ interface AllProductsProps {
     onHomeClick?: () => void;
 }
 
-const AllProducts: React.FC<AllProductsProps> = ({ onBack, onViewProduct, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
+const AllProducts: React.FC<AllProductsProps> = ({ stones, onBack, onViewProduct, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
     const { language } = useLanguage();
     const t = translations[language];
     const { addToCart, getCartItemsCount } = useCart();

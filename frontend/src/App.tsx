@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import AboutSection from './components/AboutSection';
 import AllProducts from './components/AllProducts';
 import AllProjects from './components/AllProjects';
@@ -14,194 +15,51 @@ import ProjectDetail from './components/ProjectDetail';
 import ProjectsSection from './components/ProjectsSection';
 import QuoteSection from './components/QuoteSection';
 import { useAuth } from './contexts/AuthContext';
+import { useStone, useProject, getAllStones, getAllProjects, Project } from './hooks/useData';
 import './index.css';
 import { Stone } from './types';
 
-type ViewType = 'home' | 'product' | 'cart' | 'allProducts' | 'allProjects' | 'project' | 'login' | 'profile';
 
-interface Project {
-  id: number;
-  title: {
-    en: string;
-    fa: string;
-  };
-  description: {
-    en: string;
-    fa: string;
-  };
-  location: {
-    en: string;
-    fa: string;
-  };
-  year: string;
-  category: {
-    en: string;
-    fa: string;
-  };
-  stones: string[];
-  image: string;
-  gallery?: string[];
-  video?: string;
-  client?: {
-    en: string;
-    fa: string;
-  };
-  size?: {
-    en: string;
-    fa: string;
-  };
-  duration?: {
-    en: string;
-    fa: string;
-  };
-  challenges?: {
-    en: string;
-    fa: string;
-  };
-  solutions?: {
-    en: string;
-    fa: string;
-  };
-}
-
-function App() {
-  const [currentView, setCurrentView] = useState<ViewType>('home');
-  const [selectedProduct, setSelectedProduct] = useState<Stone | null>(null);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [previousView, setPreviousView] = useState<ViewType>('home');
+// Home Page Component
+function HomePage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const handleViewProduct = (stone: Stone) => {
-    setPreviousView(currentView);
-    setSelectedProduct(stone);
-    setCurrentView('product');
-  };
-
-  const handleBackToHome = () => {
-    setCurrentView('home');
-    setSelectedProduct(null);
-    setPreviousView('home');
-  };
-
-  const handleBackToPrevious = () => {
-    setCurrentView(previousView);
-    setSelectedProduct(null);
-    setSelectedProject(null);
-  };
-
-  const handleCartClick = () => {
-    // Check if user is logged in before allowing cart access
-    if (!user) {
-      setPreviousView(currentView);
-      setCurrentView('login');
-      return;
-    }
-    setPreviousView(currentView);
-    setCurrentView('cart');
+    navigate(`/product/${stone.id}`);
   };
 
   const handleViewAllProducts = () => {
-    setCurrentView('allProducts');
+    navigate('/products');
   };
 
   const handleViewAllProjects = () => {
-    setCurrentView('allProjects');
+    navigate('/projects');
   };
 
   const handleViewProject = (project: Project) => {
-    setPreviousView(currentView);
-    setSelectedProject(project);
-    setCurrentView('project');
+    navigate(`/project/${project.id}`);
+  };
+
+  const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate('/cart');
   };
 
   const handleLoginClick = () => {
-    setPreviousView(currentView);
-    setCurrentView('login');
+    navigate('/login');
   };
 
   const handleProfileClick = () => {
-    setPreviousView(currentView);
-    setCurrentView('profile');
-  };
-
-  const handleLoginSuccess = () => {
-    setCurrentView(previousView);
+    navigate('/profile');
   };
 
   const handleHomeClick = () => {
-    setCurrentView('home');
-    setSelectedProduct(null);
-    setSelectedProject(null);
-    setPreviousView('home');
+    navigate('/');
   };
-
-  if (currentView === 'product' && selectedProduct) {
-    return <ProductDetail
-      stone={selectedProduct}
-      onBack={handleBackToPrevious}
-      onCartClick={handleCartClick}
-      onProfileClick={handleProfileClick}
-      onLoginClick={handleLoginClick}
-      onHomeClick={handleHomeClick}
-    />;
-  }
-
-  if (currentView === 'cart') {
-    return <Cart
-      onBack={handleBackToHome}
-      onCartClick={handleCartClick}
-      onProfileClick={handleProfileClick}
-      onLoginClick={handleLoginClick}
-      onHomeClick={handleHomeClick}
-    />;
-  }
-
-  if (currentView === 'allProducts') {
-    return <AllProducts
-      onBack={handleBackToHome}
-      onViewProduct={handleViewProduct}
-      onCartClick={handleCartClick}
-      onProfileClick={handleProfileClick}
-      onLoginClick={handleLoginClick}
-      onHomeClick={handleHomeClick}
-    />;
-  }
-
-  if (currentView === 'allProjects') {
-    return <AllProjects
-      onBack={handleBackToHome}
-      onViewProject={handleViewProject}
-      onCartClick={handleCartClick}
-      onProfileClick={handleProfileClick}
-      onLoginClick={handleLoginClick}
-      onHomeClick={handleHomeClick}
-    />;
-  }
-
-  if (currentView === 'project' && selectedProject) {
-    return <ProjectDetail
-      project={selectedProject}
-      onBack={handleBackToPrevious}
-      onCartClick={handleCartClick}
-      onProfileClick={handleProfileClick}
-      onLoginClick={handleLoginClick}
-      onHomeClick={handleHomeClick}
-    />;
-  }
-
-  if (currentView === 'login') {
-    return <Login onClose={handleBackToPrevious} onSuccess={handleLoginSuccess} />;
-  }
-
-  if (currentView === 'profile') {
-    return <Profile
-      onBack={handleBackToHome}
-      onCartClick={handleCartClick}
-      onProfileClick={handleProfileClick}
-      onLoginClick={handleLoginClick}
-      onHomeClick={handleHomeClick}
-    />;
-  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -228,6 +86,320 @@ function App() {
       </div>
       <Footer />
     </div>
+  );
+}
+
+// Product Detail Page Component
+function ProductDetailPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Get product ID from URL
+  const productId = location.pathname.split('/')[2];
+  const { stone, loading } = useStone(productId);
+
+  const handleBack = () => {
+    navigate(-1); // Go back to previous page
+  };
+
+  const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate('/cart');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!stone) {
+    return <div className="flex items-center justify-center min-h-screen">Product not found</div>;
+  }
+
+  return (
+    <ProductDetail
+      stone={stone}
+      onBack={handleBack}
+      onCartClick={handleCartClick}
+      onProfileClick={handleProfileClick}
+      onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
+    />
+  );
+}
+
+// Project Detail Page Component
+function ProjectDetailPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Get project ID from URL
+  const projectId = location.pathname.split('/')[2];
+  const { project, loading } = useProject(projectId);
+
+  const handleBack = () => {
+    navigate(-1); // Go back to previous page
+  };
+
+  const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate('/cart');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!project) {
+    return <div className="flex items-center justify-center min-h-screen">Project not found</div>;
+  }
+
+  return (
+    <ProjectDetail
+      project={project}
+      onBack={handleBack}
+      onCartClick={handleCartClick}
+      onProfileClick={handleProfileClick}
+      onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
+    />
+  );
+}
+
+// All Products Page Component
+function AllProductsPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const stones = getAllStones();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleViewProduct = (stone: Stone) => {
+    navigate(`/product/${stone.id}`);
+  };
+
+  const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate('/cart');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
+  };
+
+  return (
+    <AllProducts
+      stones={stones}
+      onBack={handleBack}
+      onViewProduct={handleViewProduct}
+      onCartClick={handleCartClick}
+      onProfileClick={handleProfileClick}
+      onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
+    />
+  );
+}
+
+// All Projects Page Component
+function AllProjectsPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const projects = getAllProjects();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleViewProject = (project: Project) => {
+    navigate(`/project/${project.id}`);
+  };
+
+  const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate('/cart');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
+  };
+
+  return (
+    <AllProjects
+      projects={projects}
+      onBack={handleBack}
+      onViewProject={handleViewProject}
+      onCartClick={handleCartClick}
+      onProfileClick={handleProfileClick}
+      onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
+    />
+  );
+}
+
+// Cart Page Component
+function CartPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate('/cart');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
+  };
+
+  return (
+    <Cart
+      onBack={handleBack}
+      onCartClick={handleCartClick}
+      onProfileClick={handleProfileClick}
+      onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
+    />
+  );
+}
+
+// Login Page Component
+function LoginPage() {
+  const navigate = useNavigate();
+
+  const handleClose = () => {
+    navigate(-1);
+  };
+
+  const handleSuccess = () => {
+    navigate(-1);
+  };
+
+  return <Login onClose={handleClose} onSuccess={handleSuccess} />;
+}
+
+// Profile Page Component
+function ProfilePage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate('/cart');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
+  };
+
+  return (
+    <Profile
+      onBack={handleBack}
+      onCartClick={handleCartClick}
+      onProfileClick={handleProfileClick}
+      onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
+    />
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/products" element={<AllProductsPage />} />
+        <Route path="/projects" element={<AllProjectsPage />} />
+        <Route path="/product/:id" element={<ProductDetailPage />} />
+        <Route path="/project/:id" element={<ProjectDetailPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Routes>
+    </Router>
   );
 }
 
