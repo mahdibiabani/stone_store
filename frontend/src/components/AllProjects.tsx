@@ -469,7 +469,7 @@ const AllProjects: React.FC<AllProjectsProps> = ({ onBack, onViewProject, onCart
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent font-persian"
+                            className="custom-dropdown w-44 px-4 py-3 bg-white border-2 border-stone-200 rounded-2xl focus:ring-4 focus:ring-stone-200 focus:border-stone-400 font-persian text-stone-700 shadow-sm hover:shadow-md transition-all duration-300 hover:border-stone-300"
                         >
                             <option value="all">
                                 {language === 'fa' ? 'همه دسته‌ها' : 'All Categories'}
@@ -485,7 +485,7 @@ const AllProjects: React.FC<AllProjectsProps> = ({ onBack, onViewProject, onCart
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent font-persian"
+                            className="custom-dropdown w-44 px-4 py-3 bg-white border-2 border-stone-200 rounded-2xl focus:ring-4 focus:ring-stone-200 focus:border-stone-400 font-persian text-stone-700 shadow-sm hover:shadow-md transition-all duration-300 hover:border-stone-300"
                         >
                             <option value="all">
                                 {language === 'fa' ? 'همه سال‌ها' : 'All Years'}
@@ -505,7 +505,7 @@ const AllProjects: React.FC<AllProjectsProps> = ({ onBack, onViewProject, onCart
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value as 'title' | 'year' | 'category' | 'location')}
-                                className="px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent"
+                                className="custom-dropdown w-44 px-4 py-3 bg-white border-2 border-stone-200 rounded-xl focus:ring-4 focus:ring-stone-200 focus:border-stone-400 font-persian text-stone-700 shadow-sm hover:shadow-md transition-all duration-300 hover:border-stone-300"
                             >
                                 <option value="title">
                                     {language === 'fa' ? 'عنوان' : 'Title'}
@@ -522,7 +522,7 @@ const AllProjects: React.FC<AllProjectsProps> = ({ onBack, onViewProject, onCart
                             </select>
                             <button
                                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                                className="px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-100 transition-colors"
+                                className="px-3 py-2 bg-white border-2 border-stone-200 rounded-xl hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md text-stone-600 hover:text-stone-800 font-bold"
                                 title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                             >
                                 {sortOrder === 'asc' ? '↑' : '↓'}
