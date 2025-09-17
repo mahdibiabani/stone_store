@@ -149,6 +149,8 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                 return <CheckCircle className="w-5 h-5 text-green-500" />;
             case 'shipped':
                 return <Truck className="w-5 h-5 text-blue-500" />;
+            case 'paid':
+                return <CheckCircle className="w-5 h-5 text-emerald-500" />;
             case 'processing':
                 return <Clock className="w-5 h-5 text-yellow-500" />;
             case 'cancelled':
@@ -161,6 +163,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
     const getStatusText = (status: string) => {
         const statusMap = {
             pending: language === 'fa' ? 'در انتظار' : 'Pending',
+            paid: language === 'fa' ? 'پرداخت شده' : 'Paid',
             processing: language === 'fa' ? 'در حال پردازش' : 'Processing',
             shipped: language === 'fa' ? 'ارسال شده' : 'Shipped',
             delivered: language === 'fa' ? 'تحویل داده شده' : 'Delivered',

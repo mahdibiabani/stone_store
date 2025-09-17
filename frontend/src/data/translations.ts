@@ -83,7 +83,8 @@ export const translations = {
       checkout: 'Checkout',
       remove: 'Remove',
       update: 'Update',
-      free: 'Free'
+      free: 'Free',
+      fillFromProfile: 'Fill from Profile'
     },
     orders: {
       orderNumber: 'Order Number',
@@ -92,7 +93,15 @@ export const translations = {
       orderDate: 'Order Date',
       items: 'Items',
       shippingAddress: 'Shipping Address',
-      noOrders: 'No orders yet'
+      noOrders: 'No orders yet',
+      status: {
+        pending: 'Pending',
+        paid: 'Paid',
+        processing: 'Processing',
+        shipped: 'Shipped',
+        delivered: 'Delivered',
+        cancelled: 'Cancelled'
+      }
     }
   },
   fa: {
@@ -154,7 +163,8 @@ export const translations = {
       checkout: 'تسویه حساب',
       remove: 'حذف',
       update: 'بروزرسانی',
-      free: 'رایگان'
+      free: 'رایگان',
+      fillFromProfile: 'استفاده از اطلاعات پروفایل'
     },
     orders: {
       orderNumber: 'شماره سفارش',
@@ -163,7 +173,15 @@ export const translations = {
       orderDate: 'تاریخ سفارش',
       items: 'محصولات',
       shippingAddress: 'آدرس ارسال',
-      noOrders: 'هنوز سفارشی ثبت نکرده‌اید'
+      noOrders: 'هنوز سفارشی ثبت نکرده‌اید',
+      status: {
+        pending: 'در انتظار',
+        paid: 'پرداخت شده',
+        processing: 'در حال پردازش',
+        shipped: 'ارسال شده',
+        delivered: 'تحویل داده شده',
+        cancelled: 'لغو شده'
+      }
     },
     about: {
       title: 'درباره پرشین استون نکسوس',

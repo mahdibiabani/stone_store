@@ -76,6 +76,33 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
   };
 
   const handleCheckoutClick = () => {
+    // Auto-fill shipping data from user profile
+    if (user) {
+      const updatedShippingData = {
+        address: user.address || '',
+        city: '',
+        postal_code: '',
+        phone: user.phone || ''
+      };
+
+      // Try to parse address if it contains city/postal code
+      if (user.address) {
+        const addressParts = user.address.split(',').map(part => part.trim());
+        if (addressParts.length >= 3) {
+          // Assume format: "address, city, postal_code"
+          updatedShippingData.address = addressParts.slice(0, -2).join(', ');
+          updatedShippingData.city = addressParts[addressParts.length - 2];
+          updatedShippingData.postal_code = addressParts[addressParts.length - 1];
+        } else if (addressParts.length === 2) {
+          // Assume format: "address, city"
+          updatedShippingData.address = addressParts[0];
+          updatedShippingData.city = addressParts[1];
+        }
+      }
+
+      setShippingData(updatedShippingData);
+    }
+    
     setShowCheckoutForm(true);
     setCheckoutError('');
   };
@@ -113,6 +140,34 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
     setShippingData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleFillFromProfile = () => {
+    if (user) {
+      const updatedShippingData = {
+        address: user.address || '',
+        city: '',
+        postal_code: '',
+        phone: user.phone || ''
+      };
+
+      // Try to parse address if it contains city/postal code
+      if (user.address) {
+        const addressParts = user.address.split(',').map(part => part.trim());
+        if (addressParts.length >= 3) {
+          // Assume format: "address, city, postal_code"
+          updatedShippingData.address = addressParts.slice(0, -2).join(', ');
+          updatedShippingData.city = addressParts[addressParts.length - 2];
+          updatedShippingData.postal_code = addressParts[addressParts.length - 1];
+        } else if (addressParts.length === 2) {
+          // Assume format: "address, city"
+          updatedShippingData.address = addressParts[0];
+          updatedShippingData.city = addressParts[1];
+        }
+      }
+
+      setShippingData(updatedShippingData);
+    }
+  };
+
   // If user is not logged in, show login prompt
   if (!user) {
     return (
@@ -124,7 +179,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
               {/* Left side - Back Button and Logo */}
               <div className="flex items-center space-x-4 rtl:space-x-reverse">
                 <button
-                  onClick={onBack}
+                  onClick={onHomeClick || onBack}
                   className="flex items-center space-x-2 text-stone-600 hover:text-stone-800 transition-colors rtl:space-x-reverse"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -244,7 +299,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
               {/* Left side - Back Button and Logo */}
               <div className="flex items-center space-x-4 rtl:space-x-reverse">
                 <button
-                  onClick={onBack}
+                  onClick={onHomeClick || onBack}
                   className="flex items-center space-x-2 text-stone-600 hover:text-stone-800 transition-colors rtl:space-x-reverse"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -674,6 +729,20 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
             </div>
 
             <form onSubmit={handleCheckoutSubmit} className="p-6 space-y-4">
+              {/* Fill from Profile Button */}
+              {user && (user.address || user.phone) && (
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={handleFillFromProfile}
+                    className="flex items-center space-x-2 rtl:space-x-reverse px-3 py-2 bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors text-sm font-persian"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>{t.cart.fillFromProfile}</span>
+                  </button>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2 font-persian">
                   {language === 'fa' ? 'آدرس' : 'Address'}
