@@ -13,6 +13,7 @@ import Profile from './components/Profile';
 import ProjectDetail from './components/ProjectDetail';
 import ProjectsSection from './components/ProjectsSection';
 import QuoteSection from './components/QuoteSection';
+import { useAuth } from './contexts/AuthContext';
 import './index.css';
 import { Stone } from './types';
 
@@ -68,6 +69,7 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState<Stone | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [previousView, setPreviousView] = useState<ViewType>('home');
+  const { user } = useAuth();
 
   const handleViewProduct = (stone: Stone) => {
     setPreviousView(currentView);
@@ -88,6 +90,12 @@ function App() {
   };
 
   const handleCartClick = () => {
+    // Check if user is logged in before allowing cart access
+    if (!user) {
+      setPreviousView(currentView);
+      setCurrentView('login');
+      return;
+    }
     setPreviousView(currentView);
     setCurrentView('cart');
   };
@@ -175,7 +183,7 @@ function App() {
 
   if (currentView === 'profile') {
     return <Profile
-      onBack={handleBackToPrevious}
+      onBack={handleBackToHome}
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
@@ -193,7 +201,7 @@ function App() {
         <Hero />
       </div>
       <div id="products">
-        <ProductsSection onViewProduct={handleViewProduct} onViewAllProducts={handleViewAllProducts} />
+        <ProductsSection onViewProduct={handleViewProduct} onViewAllProducts={handleViewAllProducts} onLoginClick={handleLoginClick} />
       </div>
       <div id="projects">
         <ProjectsSection onViewAllProjects={handleViewAllProjects} onViewProject={handleViewProject} />

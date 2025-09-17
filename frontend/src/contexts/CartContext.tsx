@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { CartItem, Stone } from '../types';
+import { useAuth } from './AuthContext';
 
 interface CartContextType {
     cartItems: CartItem[];
@@ -19,26 +20,39 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const { user } = useAuth();
 
-    // Load cart from localStorage on mount
+    // Get user-specific cart key
+    const getCartKey = (userId: string | null) => {
+        return userId ? `medusa-stone-cart-${userId}` : 'medusa-stone-cart-guest';
+    };
+
+    // Load cart from localStorage when user changes
     useEffect(() => {
-        const savedCart = localStorage.getItem('medusa-stone-cart');
+        const cartKey = getCartKey(user?.id || null);
+        const savedCart = localStorage.getItem(cartKey);
         if (savedCart) {
             try {
                 const parsedCart = JSON.parse(savedCart);
-                console.log('Loaded cart from localStorage:', parsedCart);
+                console.log('Loaded cart from localStorage for user:', user?.id || 'guest', parsedCart);
                 setCartItems(parsedCart);
             } catch (error) {
                 console.error('Error loading cart from localStorage:', error);
+                setCartItems([]);
             }
+        } else {
+            setCartItems([]);
         }
-    }, []);
+    }, [user?.id]);
 
     // Save cart to localStorage whenever it changes
     useEffect(() => {
-        console.log('Saving cart to localStorage:', cartItems);
-        localStorage.setItem('medusa-stone-cart', JSON.stringify(cartItems));
-    }, [cartItems]);
+        if (user?.id) {
+            const cartKey = getCartKey(user.id);
+            console.log('Saving cart to localStorage for user:', user.id, cartItems);
+            localStorage.setItem(cartKey, JSON.stringify(cartItems));
+        }
+    }, [cartItems, user?.id]);
 
     const addToCart = (stone: Stone, quantity: number = 1, options?: { finish?: string; thickness?: string; notes?: string }) => {
         console.log('addToCart called with:', { stone: stone.name, quantity, options });
@@ -102,6 +116,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
     const clearCart = () => {
         setCartItems([]);
+        // Also clear from localStorage
+        if (user?.id) {
+            const cartKey = getCartKey(user.id);
+            localStorage.removeItem(cartKey);
+        }
     };
 
     const getCartTotal = () => {

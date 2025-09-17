@@ -118,6 +118,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const logout = async (): Promise<void> => {
         try {
+            // Clear user-specific cart from localStorage before logging out
+            if (user?.id) {
+                const cartKey = `medusa-stone-cart-${user.id}`;
+                localStorage.removeItem(cartKey);
+            }
             setUser(null);
         } catch (error) {
             console.error('Error logging out:', error);

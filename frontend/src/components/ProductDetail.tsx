@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, Minus, Play, Plus, ShoppingCart, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
@@ -16,6 +17,7 @@ interface ProductDetailProps {
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClick, onProfileClick, onLoginClick }) => {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const t = translations[language];
 
@@ -30,6 +32,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
   const thicknesses = ['2cm', '3cm', '4cm', '5cm'];
 
   const handleAddToCart = () => {
+    if (!user) {
+      // If user is not logged in, redirect to login
+      onLoginClick?.();
+      return;
+    }
     addToCart(stone, quantity, {
       finish: selectedFinish,
       thickness: selectedThickness,
@@ -86,8 +93,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={`w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all ${selectedImage === index
-                        ? 'border-stone-600 shadow-lg'
-                        : 'border-transparent hover:border-stone-300'
+                      ? 'border-stone-600 shadow-lg'
+                      : 'border-transparent hover:border-stone-300'
                       }`}
                   >
                     <img

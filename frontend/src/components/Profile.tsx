@@ -1,9 +1,11 @@
-import { ArrowLeft, Calendar, CheckCircle, Clock, Edit3, Mail, MapPin, Package, Phone, Truck, User, XCircle } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Calendar, CheckCircle, Clock, Edit3, LogOut, Mail, MapPin, Mountain, Package, Phone, ShoppingCart, Truck, User, UserCircle, XCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Order, useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
+import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
-import Header from './Header';
+import ConfirmationModal from './ConfirmationModal';
+import LanguageToggle from './LanguageToggle';
 
 interface ProfileProps {
     onBack: () => void;
@@ -16,17 +18,36 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
     const { user, updateProfile, getOrders, logout } = useAuth();
     const { language } = useLanguage();
     const t = translations[language];
+    const { getCartItemsCount } = useCart();
 
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState<Order[]>([]);
     const [ordersLoading, setOrdersLoading] = useState(true);
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const [formData, setFormData] = useState({
         name: user?.name || '',
         phone: user?.phone || '',
         address: user?.address || '',
     });
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsProfileDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     useEffect(() => {
         if (user) {
@@ -89,11 +110,35 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
         setIsEditing(false);
     };
 
-    const handleLogout = async () => {
-        if (confirm(language === 'fa' ? 'آیا می‌خواهید خارج شوید؟' : 'Are you sure you want to logout?')) {
+    const handleLogout = () => {
+        setShowLogoutConfirm(true);
+    };
+
+    const handleLogoutConfirm = async () => {
+        setIsLoggingOut(true);
+        try {
             await logout();
+            setShowLogoutConfirm(false);
             onBack();
+        } catch (error) {
+            console.error('Error during logout:', error);
+        } finally {
+            setIsLoggingOut(false);
         }
+    };
+
+    const handleProfileClick = () => {
+        setIsProfileDropdownOpen(false);
+        if (user) {
+            onProfileClick?.();
+        } else {
+            onLoginClick?.();
+        }
+    };
+
+    const handleLogoutFromDropdown = () => {
+        setShowLogoutConfirm(true);
+        setIsProfileDropdownOpen(false);
     };
 
     const getStatusIcon = (status: string) => {
@@ -134,11 +179,89 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
     if (!user) {
         return (
             <div className="min-h-screen bg-white">
-                <Header
-                    onCartClick={onCartClick || (() => { })}
-                    onProfileClick={onProfileClick}
-                    onLoginClick={onLoginClick}
-                />
+                {/* Custom Header */}
+                <header className="bg-warm-50/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-warm-200/50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center py-4">
+                            {/* Left side - Back Button and Logo */}
+                            <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                                <button
+                                    onClick={onBack}
+                                    className="flex items-center space-x-2 text-stone-600 hover:text-stone-800 transition-colors rtl:space-x-reverse"
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
+                                    <span className="font-persian">
+                                        {language === 'fa' ? 'بازگشت به صفحه اصلی' : 'Back to Home'}
+                                    </span>
+                                </button>
+
+                                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                                    <div className="bg-stone-800 p-2 rounded-lg">
+                                        <Mountain className="w-6 h-6 text-warm-50" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-xl font-bold text-stone-800 font-persian">
+                                            {language === 'fa' ? 'سنگ مدوسا' : 'Medusa Stone'}
+                                        </h1>
+                                        <p className="text-xs text-stone-600 font-persian">
+                                            {language === 'fa' ? 'کیفیت برتر زندگی' : 'A Higher Quality of Living'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Center - Profile Title */}
+                            <div className="flex-1 text-center">
+                                <h1 className="text-2xl md:text-3xl font-bold text-stone-800 font-persian">
+                                    {language === 'fa' ? 'پروفایل' : 'Profile'}
+                                </h1>
+                            </div>
+
+                            {/* Right side - Language toggle, Profile, Cart */}
+                            <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                                <LanguageToggle />
+
+                                {/* Profile Icon */}
+                                <div className="relative" ref={dropdownRef}>
+                                    <button
+                                        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                                        className="relative p-2 text-stone-600 hover:text-stone-800 transition-colors bg-white rounded-lg shadow-sm hover:shadow-md"
+                                    >
+                                        <User className="w-6 h-6" />
+                                    </button>
+
+                                    {/* Profile Dropdown */}
+                                    {isProfileDropdownOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
+                                            <button
+                                                onClick={handleProfileClick}
+                                                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
+                                            >
+                                                <User className="w-4 h-4" />
+                                                <span className="font-persian">
+                                                    {language === 'fa' ? 'ورود / ثبت نام' : 'Login / Register'}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={onCartClick || (() => { })}
+                                    className="relative p-2 text-stone-600 hover:text-stone-800 transition-colors bg-white rounded-lg shadow-sm hover:shadow-md"
+                                >
+                                    <ShoppingCart className="w-6 h-6" />
+                                    {getCartItemsCount() > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">
+                                            {getCartItemsCount()}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
                 <div className="flex items-center justify-center h-[calc(100vh-80px)]">
                     <div className="text-center">
                         <h2 className="text-2xl font-bold text-stone-800 mb-4 font-persian">
@@ -158,32 +281,125 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
 
     return (
         <div className="min-h-screen bg-white">
-            <Header
-                onCartClick={onCartClick || (() => { })}
-                onProfileClick={onProfileClick}
-                onLoginClick={onLoginClick}
-            />
+            {/* Custom Header */}
+            <header className="bg-warm-50/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-warm-200/50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center py-4">
+                        {/* Left side - Back Button and Logo */}
+                        <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                            <button
+                                onClick={onBack}
+                                className="flex items-center space-x-2 text-stone-600 hover:text-stone-800 transition-colors rtl:space-x-reverse"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                                <span className="font-persian">
+                                    {language === 'fa' ? 'بازگشت به صفحه اصلی' : 'Back to Home'}
+                                </span>
+                            </button>
 
-            {/* Page Title and Back Button */}
-            <div className="bg-stone-50 border-b border-stone-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <button
-                            onClick={onBack}
-                            className="flex items-center space-x-2 text-stone-600 hover:text-stone-800 transition-colors rtl:space-x-reverse"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                            <span className="font-medium font-persian">
-                                {language === 'fa' ? 'بازگشت' : 'Back'}
-                            </span>
-                        </button>
-                        <h1 className="text-2xl font-bold text-stone-800 font-persian">
-                            {language === 'fa' ? 'پروفایل' : 'Profile'}
-                        </h1>
-                        <div className="w-20"></div>
+                            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                                <div className="bg-stone-800 p-2 rounded-lg">
+                                    <Mountain className="w-6 h-6 text-warm-50" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold text-stone-800 font-persian">
+                                        {language === 'fa' ? 'سنگ مدوسا' : 'Medusa Stone'}
+                                    </h1>
+                                    <p className="text-xs text-stone-600 font-persian">
+                                        {language === 'fa' ? 'کیفیت برتر زندگی' : 'A Higher Quality of Living'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Center - Profile Title */}
+                        <div className="flex-1 text-center">
+                            <h1 className="text-2xl md:text-3xl font-bold text-stone-800 font-persian">
+                                {language === 'fa' ? 'پروفایل' : 'Profile'}
+                            </h1>
+                        </div>
+
+                        {/* Right side - Language toggle, Profile, Cart */}
+                        <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                            <LanguageToggle />
+
+                            {/* Profile Icon */}
+                            <div className="relative" ref={dropdownRef}>
+                                <button
+                                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                                    className="relative p-2 text-stone-600 hover:text-stone-800 transition-colors bg-white rounded-lg shadow-sm hover:shadow-md"
+                                >
+                                    {user ? (
+                                        <UserCircle className="w-6 h-6" />
+                                    ) : (
+                                        <User className="w-6 h-6" />
+                                    )}
+                                </button>
+
+                                {/* Profile Dropdown */}
+                                {isProfileDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
+                                        {user ? (
+                                            <>
+                                                <div className="px-4 py-2 border-b border-stone-100">
+                                                    <p className="text-sm font-medium text-stone-800 font-persian">
+                                                        {user.name || user.email}
+                                                    </p>
+                                                    <p className="text-xs text-stone-500">{user.email}</p>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        handleProfileClick();
+                                                    }}
+                                                    className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
+                                                >
+                                                    <UserCircle className="w-4 h-4" />
+                                                    <span className="font-persian">
+                                                        {language === 'fa' ? 'پروفایل' : 'Profile'}
+                                                    </span>
+                                                </button>
+                                                <button
+                                                    onClick={handleLogoutFromDropdown}
+                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
+                                                >
+                                                    <LogOut className="w-4 h-4" />
+                                                    <span className="font-persian">
+                                                        {language === 'fa' ? 'خروج' : 'Logout'}
+                                                    </span>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={handleProfileClick}
+                                                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
+                                            >
+                                                <User className="w-4 h-4" />
+                                                <span className="font-persian">
+                                                    {language === 'fa' ? 'ورود / ثبت نام' : 'Login / Register'}
+                                                </span>
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={onCartClick || (() => { })}
+                                className="relative p-2 text-stone-600 hover:text-stone-800 transition-colors bg-white rounded-lg shadow-sm hover:shadow-md"
+                            >
+                                <ShoppingCart className="w-6 h-6" />
+                                {getCartItemsCount() > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">
+                                        {getCartItemsCount()}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -401,6 +617,19 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                     </div>
                 </div>
             </div>
+
+            {/* Logout Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={handleLogoutConfirm}
+                title={language === 'fa' ? 'تأیید خروج' : 'Confirm Logout'}
+                message={language === 'fa' ? 'آیا مطمئن هستید که می‌خواهید از حساب کاربری خود خارج شوید؟' : 'Are you sure you want to logout from your account?'}
+                confirmText={language === 'fa' ? 'خروج' : 'Logout'}
+                cancelText={language === 'fa' ? 'لغو' : 'Cancel'}
+                confirmButtonClass="bg-red-600 hover:bg-red-700"
+                isLoading={isLoggingOut}
+            />
         </div>
     );
 };

@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, ShoppingCart } from 'lucide-react';
 import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { stones } from '../data/stones';
 import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
@@ -10,15 +11,22 @@ import ProductCard from './ProductCard';
 interface ProductsSectionProps {
   onViewProduct: (stone: Stone) => void;
   onViewAllProducts: () => void;
+  onLoginClick?: () => void;
 }
 
-const ProductsSection: React.FC<ProductsSectionProps> = ({ onViewProduct, onViewAllProducts }) => {
+const ProductsSection: React.FC<ProductsSectionProps> = ({ onViewProduct, onViewAllProducts, onLoginClick }) => {
   const { language } = useLanguage();
   const t = translations[language];
+  const { user } = useAuth();
   const { getCartItemsCount, addToCart } = useCart();
 
 
   const handleAddToCart = (stone: Stone) => {
+    if (!user) {
+      // If user is not logged in, redirect to login
+      onLoginClick?.();
+      return;
+    }
     console.log('ProductsSection handleAddToCart called for:', stone.name[language]);
     addToCart(stone, 1);
     console.log('addToCart function called');
