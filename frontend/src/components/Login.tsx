@@ -94,14 +94,6 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
                     </button>
                 </div>
 
-                {/* Test Mode Indicator */}
-                {(import.meta.env.MODE === 'development' || import.meta.env.VITE_SUPABASE_URL === 'https://your-project.supabase.co') && (
-                    <div className="mx-6 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm text-blue-700 font-persian">
-                            <strong>{language === 'fa' ? 'حالت تست:' : 'Test Mode:'}</strong> {language === 'fa' ? 'هر ایمیل و رمز عبوری کار می‌کند' : 'Any email and password will work'}
-                        </p>
-                    </div>
-                )}
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">

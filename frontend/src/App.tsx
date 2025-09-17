@@ -140,7 +140,7 @@ function App() {
 
   if (currentView === 'cart') {
     return <Cart
-      onBack={handleBackToPrevious}
+      onBack={handleBackToHome}
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}

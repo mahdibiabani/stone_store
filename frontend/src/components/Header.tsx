@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
+import ConfirmationModal from './ConfirmationModal';
 import LanguageToggle from './LanguageToggle';
 
 interface HeaderProps {
@@ -15,6 +16,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { language } = useLanguage();
   const t = translations[language];
@@ -52,9 +55,21 @@ const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginCli
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
     setIsProfileDropdownOpen(false);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setShowLogoutConfirm(false);
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -269,6 +284,19 @@ const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginCli
           </div>
         )}
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogoutConfirm}
+        title={language === 'fa' ? 'تأیید خروج' : 'Confirm Logout'}
+        message={language === 'fa' ? 'آیا مطمئن هستید که می‌خواهید از حساب کاربری خود خارج شوید؟' : 'Are you sure you want to logout from your account?'}
+        confirmText={language === 'fa' ? 'خروج' : 'Logout'}
+        cancelText={language === 'fa' ? 'لغو' : 'Cancel'}
+        confirmButtonClass="bg-red-600 hover:bg-red-700"
+        isLoading={isLoggingOut}
+      />
     </header>
   );
 };
