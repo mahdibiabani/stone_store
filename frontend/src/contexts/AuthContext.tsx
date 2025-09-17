@@ -1,10 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-
-// Supabase configuration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { api, ApiUser, ApiOrder } from '../services/api';
 
 export interface User {
     id: string;
@@ -18,6 +13,8 @@ export interface User {
 export interface Order {
     id: string;
     user_id: string;
+    order_number: string;
+    tracking_code?: string;
     items: Array<{
         stone_id: string;
         name: string;
@@ -26,7 +23,8 @@ export interface Order {
         image: string;
     }>;
     total: number;
-    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    payment_status: 'pending' | 'completed' | 'failed' | 'cancelled';
     created_at: string;
     shipping_address: string;
     notes?: string;
@@ -39,7 +37,7 @@ interface AuthContextType {
     register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
     updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>;
-    getOrders: () => Promise<Order[]>;
+    getOrders: (language?: 'en' | 'fa') => Promise<Order[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,66 +51,126 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // For testing - no persistent login, start with no user
-        setLoading(false);
-    }, []);
-
-    const getUserData = async (userId: string): Promise<User | null> => {
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-
-            if (error) {
-                console.error('Error fetching user data:', error);
-                return null;
+        // Check if user is already logged in
+        const checkAuthStatus = async () => {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try {
+                    const apiUser = await api.auth.getProfile();
+                    setUser({
+                        id: apiUser.id.toString(),
+                        email: apiUser.email,
+                        name: `${apiUser.first_name} ${apiUser.last_name}`.trim(),
+                        phone: apiUser.phone,
+                        address: apiUser.address,
+                        created_at: apiUser.date_joined
+                    });
+                } catch (error) {
+                    console.error('Failed to get user profile:', error);
+                    localStorage.removeItem('auth_token');
+                }
             }
+            setLoading(false);
+        };
 
-            return data;
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-            return null;
-        }
-    };
+        checkAuthStatus();
+    }, []);
 
     const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            // For testing purposes - allow any email/password combination
-            // Create a mock user for testing
-            const mockUser: User = {
-                id: 'test-user-' + Date.now(),
-                email: email,
-                name: email.split('@')[0], // Use email prefix as name
-                phone: '+1234567890',
-                address: '123 Test Street, Test City',
-                created_at: new Date().toISOString()
-            };
-
-            setUser(mockUser);
+            const response = await api.auth.login(email, password);
+            
+            const apiUser = response.user;
+            setUser({
+                id: apiUser.id.toString(),
+                email: apiUser.email,
+                name: `${apiUser.first_name} ${apiUser.last_name}`.trim(),
+                phone: apiUser.phone,
+                address: apiUser.address,
+                created_at: apiUser.date_joined
+            });
+            
             return { success: true };
         } catch (error) {
-            return { success: false, error: 'An unexpected error occurred' };
+            let errorMessage = 'Login failed';
+            
+            if (error instanceof Error) {
+                const originalError = error.message.toLowerCase();
+                
+                // Map common Django authentication errors to user-friendly messages
+                if (originalError.includes('unable to log in') || originalError.includes('invalid credentials') || originalError.includes('incorrect')) {
+                    errorMessage = 'نام کاربری یا رمز عبور نادرست است'; // Persian: Username or password is incorrect
+                } else if (originalError.includes('user account is disabled')) {
+                    errorMessage = 'حساب کاربری غیرفعال است'; // Persian: User account is disabled
+                } else if (originalError.includes('this field may not be blank') || originalError.includes('required')) {
+                    errorMessage = 'لطفا تمام فیلدهای ضروری را پر کنید'; // Persian: Please fill all required fields
+                } else {
+                    // For other errors, show the original message if it's user-friendly, otherwise show generic message
+                    errorMessage = originalError.length < 100 ? error.message : 'خطا در ورود به سیستم'; // Persian: Login error
+                }
+            }
+            
+            return { 
+                success: false, 
+                error: errorMessage
+            };
         }
     };
 
     const register = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            // For testing purposes - create a mock user
-            const mockUser: User = {
-                id: 'test-user-' + Date.now(),
-                email: email,
-                name: name,
-                phone: '+1234567890',
-                address: '123 Test Street, Test City',
-                created_at: new Date().toISOString()
-            };
-
-            setUser(mockUser);
+            const nameParts = name.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
+            const response = await api.auth.register(email, password, firstName, lastName);
+            
+            const apiUser = response.user;
+            setUser({
+                id: apiUser.id.toString(),
+                email: apiUser.email,
+                name: `${apiUser.first_name} ${apiUser.last_name}`.trim(),
+                phone: apiUser.phone,
+                address: apiUser.address,
+                created_at: apiUser.date_joined
+            });
+            
             return { success: true };
         } catch (error) {
-            return { success: false, error: 'An unexpected error occurred' };
+            let errorMessage = 'Registration failed';
+            
+            if (error instanceof Error) {
+                const originalError = error.message.toLowerCase();
+                
+                // Map common Django registration errors to user-friendly messages
+                if (originalError.includes('user with this email already exists') || originalError.includes('already exists')) {
+                    errorMessage = 'کاربری با این ایمیل قبلاً ثبت نام کرده است'; // Persian: User with this email already registered
+                } else if (originalError.includes('username') && originalError.includes('already exists')) {
+                    errorMessage = 'این ایمیل قبلاً استفاده شده است'; // Persian: This email has already been used
+                } else if (originalError.includes('password too short') || originalError.includes('ensure this field has at least 8')) {
+                    errorMessage = 'رمز عبور باید حداقل ۸ کاراکتر باشد'; // Persian: Password must be at least 8 characters
+                } else if (originalError.includes('password too common') || originalError.includes('password is too common')) {
+                    errorMessage = 'رمز عبور انتخابی بسیار ساده است'; // Persian: Password is too common
+                } else if (originalError.includes('passwords don\'t match') || originalError.includes('password')) {
+                    errorMessage = 'رمز عبور وارد شده معتبر نیست'; // Persian: Invalid password
+                } else if (originalError.includes('enter a valid email')) {
+                    errorMessage = 'لطفا ایمیل معتبر وارد کنید'; // Persian: Please enter a valid email
+                } else if (originalError.includes('this field may not be blank') || originalError.includes('required')) {
+                    errorMessage = 'لطفا تمام فیلدهای ضروری را پر کنید'; // Persian: Please fill all required fields
+                } else if (originalError.includes('first_name')) {
+                    errorMessage = 'لطفا نام خود را وارد کنید'; // Persian: Please enter your name
+                } else if (originalError.includes('username')) {
+                    errorMessage = 'مشکلی در نام کاربری وجود دارد'; // Persian: There's an issue with the username
+                } else {
+                    // For other errors, show the original message if it's user-friendly, otherwise show generic message
+                    errorMessage = originalError.length < 100 ? error.message : 'خطا در ثبت نام'; // Persian: Registration error
+                }
+            }
+            
+            return { 
+                success: false, 
+                error: errorMessage
+            };
         }
     };
 
@@ -123,6 +181,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 const cartKey = `medusa-stone-cart-${user.id}`;
                 localStorage.removeItem(cartKey);
             }
+            
+            api.auth.logout();
             setUser(null);
         } catch (error) {
             console.error('Error logging out:', error);
@@ -135,60 +195,65 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         try {
-            // Update local user state only (for testing)
-            setUser({ ...user, ...updates });
+            // Convert frontend user format to API format
+            const apiUpdates: Partial<ApiUser> = {};
+            
+            if (updates.name) {
+                const nameParts = updates.name.split(' ');
+                apiUpdates.first_name = nameParts[0] || '';
+                apiUpdates.last_name = nameParts.slice(1).join(' ') || '';
+            }
+            
+            if (updates.phone !== undefined) apiUpdates.phone = updates.phone;
+            if (updates.address !== undefined) apiUpdates.address = updates.address;
+
+            const updatedApiUser = await api.auth.updateProfile(apiUpdates);
+            
+            // Update local user state
+            setUser({
+                ...user,
+                name: `${updatedApiUser.first_name} ${updatedApiUser.last_name}`.trim(),
+                phone: updatedApiUser.phone,
+                address: updatedApiUser.address
+            });
+            
             return { success: true };
         } catch (error) {
-            return { success: false, error: 'An unexpected error occurred' };
+            return { 
+                success: false, 
+                error: error instanceof Error ? error.message : 'Update failed' 
+            };
         }
     };
 
-    const getOrders = async (): Promise<Order[]> => {
+    const getOrders = async (language: 'en' | 'fa' = 'en'): Promise<Order[]> => {
         if (!user) {
             return [];
         }
 
         try {
-            // Return mock orders for testing
-            const mockOrders: Order[] = [
-                {
-                    id: 'order-1',
-                    user_id: user.id,
-                    items: [
-                        {
-                            stone_id: 'stone-1',
-                            name: 'Granite Countertop',
-                            quantity: 1,
-                            price: 2500.00,
-                            image: '/images/granite.jpg'
-                        }
-                    ],
-                    total: 2500.00,
-                    status: 'delivered',
-                    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-                    shipping_address: '123 Test Street, Test City, TC 12345',
-                    notes: 'Test order'
-                },
-                {
-                    id: 'order-2',
-                    user_id: user.id,
-                    items: [
-                        {
-                            stone_id: 'stone-2',
-                            name: 'Marble Tiles',
-                            quantity: 10,
-                            price: 150.00,
-                            image: '/images/marble.jpg'
-                        }
-                    ],
-                    total: 1500.00,
-                    status: 'processing',
-                    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-                    shipping_address: '123 Test Street, Test City, TC 12345'
-                }
-            ];
-
-            return mockOrders;
+            const apiOrders: ApiOrder[] = await api.orders.getAll();
+            
+            // Transform API orders to frontend format
+            return apiOrders.map(apiOrder => ({
+                id: apiOrder.id.toString(),
+                user_id: user.id,
+                order_number: apiOrder.order_number,
+                tracking_code: apiOrder.tracking_code,
+                items: apiOrder.items.map(item => ({
+                    stone_id: item.stone.id.toString(),
+                    name: language === 'fa' ? item.stone.name_fa : item.stone.name_en,
+                    quantity: item.quantity,
+                    price: parseFloat(item.price),
+                    image: item.stone.images[0]?.image || ''
+                })),
+                total: parseFloat(apiOrder.total_amount),
+                status: apiOrder.status,
+                payment_status: apiOrder.payment_status,
+                created_at: apiOrder.created_at,
+                shipping_address: `${apiOrder.shipping_address}, ${apiOrder.shipping_city}, ${apiOrder.shipping_postal_code}`,
+                notes: ''
+            }));
         } catch (error) {
             console.error('Error fetching orders:', error);
             return [];

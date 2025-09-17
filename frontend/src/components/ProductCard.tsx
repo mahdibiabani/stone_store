@@ -2,6 +2,7 @@ import { Eye, FileText, MapPin } from 'lucide-react';
 import React from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { Stone } from '../types';
+import { formatPriceWithUnit, formatTechnicalValue } from '../utils/numberFormat';
 
 interface ProductCardProps {
   stone: Stone;
@@ -77,10 +78,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ stone, onViewDetails, onAddTo
                     {language === 'fa' ? 'مشخصات فنی' : 'Technical Data'}
                   </h4>
                   <div className="grid grid-cols-2 gap-2 text-xs text-stone-600">
-                    <div className="font-persian">Density: {stone.technicalData.density}</div>
-                    <div className="font-persian">Porosity: {stone.technicalData.porosity}</div>
-                    <div className="font-persian">Compressive: {stone.technicalData.compressiveStrength}</div>
-                    <div className="font-persian">Flexural: {stone.technicalData.flexuralStrength}</div>
+                    <div className="font-persian">Density: {formatTechnicalValue(stone.technicalData.density, language)}</div>
+                    <div className="font-persian">Porosity: {formatTechnicalValue(stone.technicalData.porosity, language)}</div>
+                    <div className="font-persian">Compressive: {formatTechnicalValue(stone.technicalData.compressiveStrength, language)}</div>
+                    <div className="font-persian">Flexural: {formatTechnicalValue(stone.technicalData.flexuralStrength, language)}</div>
                   </div>
                 </div>
               </div>
@@ -89,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ stone, onViewDetails, onAddTo
               <div className="flex items-center justify-between">
                 {stone.price && (
                   <div className="text-xl font-bold text-stone-800 font-persian">
-                    {stone.price}/m²
+                    {formatPriceWithUnit(stone.price, language)}
                   </div>
                 )}
                 <div className="flex space-x-3 rtl:space-x-reverse">
@@ -163,7 +164,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ stone, onViewDetails, onAddTo
           </div>
           {stone.price && (
             <div className="text-lg font-bold text-stone-800 font-persian">
-              {stone.price}/m²
+              {formatPriceWithUnit(stone.price, language)}
             </div>
           )}
         </div>
@@ -174,8 +175,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ stone, onViewDetails, onAddTo
             {language === 'fa' ? 'مشخصات فنی' : 'Technical Data'}
           </h4>
           <div className="grid grid-cols-2 gap-2 text-xs text-stone-600">
-            <div className="font-persian">Density: {stone.technicalData.density}</div>
-            <div className="font-persian">Porosity: {stone.technicalData.porosity}</div>
+            <div className="font-persian">Density: {formatTechnicalValue(stone.technicalData.density, language)}</div>
+            <div className="font-persian">Porosity: {formatTechnicalValue(stone.technicalData.porosity, language)}</div>
           </div>
         </div>
 

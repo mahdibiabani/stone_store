@@ -15,7 +15,7 @@ import ProjectDetail from './components/ProjectDetail';
 import ProjectsSection from './components/ProjectsSection';
 import QuoteSection from './components/QuoteSection';
 import { useAuth } from './contexts/AuthContext';
-import { useStone, useProject, getAllStones, getAllProjects, Project } from './hooks/useData';
+import { useStone, useProject, useStones, useProjects, Project } from './hooks/useData';
 import './index.css';
 import { Stone } from './types';
 
@@ -201,7 +201,7 @@ function ProjectDetailPage() {
 function AllProductsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const stones = getAllStones();
+  const { stones } = useStones();
 
   const handleBack = () => {
     navigate(-1);
@@ -248,7 +248,7 @@ function AllProductsPage() {
 function AllProjectsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const projects = getAllProjects();
+  const { projects } = useProjects();
 
   const handleBack = () => {
     navigate(-1);
@@ -334,13 +334,15 @@ function CartPage() {
 // Login Page Component
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleClose = () => {
-    navigate(-1);
+    navigate('/');
   };
 
   const handleSuccess = () => {
-    navigate(-1);
+    // Always go to home page after successful login
+    navigate('/');
   };
 
   return <Login onClose={handleClose} onSuccess={handleSuccess} />;
@@ -386,6 +388,108 @@ function ProfilePage() {
   );
 }
 
+// Payment Success Page Component
+function PaymentSuccessPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Get URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const success = urlParams.get('success') === 'true';
+  const orderNumber = urlParams.get('order_number');
+  const refId = urlParams.get('ref_id');
+  
+  // If user is not logged in, redirect to home
+  // This prevents accessing payment success page when not authenticated
+  if (!user) {
+    navigate('/');
+    return null;
+  }
+  
+  const handleViewOrders = () => {
+    navigate('/profile');
+  };
+  
+  const handleBackHome = () => {
+    navigate('/');
+  };
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+        {success ? (
+          <>
+            <div className="text-6xl mb-6">✅</div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">
+              پرداخت موفقیت‌آمیز!
+            </h1>
+            <p className="text-gray-600 mb-6">
+              سفارش شما با موفقیت ثبت شد
+            </p>
+            {orderNumber && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-600">شماره سفارش:</p>
+                <p className="font-bold">{orderNumber}</p>
+                {refId && (
+                  <>
+                    <p className="text-sm text-gray-600 mt-2">شماره پیگیری:</p>
+                    <p className="font-bold">{refId}</p>
+                  </>
+                )}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={handleViewOrders}
+                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                مشاهده سفارشات
+              </button>
+              <button
+                onClick={handleBackHome}
+                className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                بازگشت به خانه
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-6xl mb-6">❌</div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">
+              پرداخت ناموفق
+            </h1>
+            <p className="text-gray-600 mb-6">
+              پرداخت انجام نشد. لطفاً دوباره تلاش کنید
+            </p>
+            {orderNumber && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-600">شماره سفارش:</p>
+                <p className="font-bold">{orderNumber}</p>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/cart')}
+                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                بازگشت به سبد خرید
+              </button>
+              <button
+                onClick={handleBackHome}
+                className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                بازگشت به خانه
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -398,6 +502,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
       </Routes>
     </Router>
   );

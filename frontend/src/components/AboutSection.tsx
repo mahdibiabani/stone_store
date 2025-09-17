@@ -2,6 +2,7 @@ import React from 'react';
 import { Award, Users, Globe } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { translations } from '../data/translations';
+import { toPersianNumbers } from '../utils/numberFormat';
 
 const AboutSection: React.FC = () => {
   const { language } = useLanguage();
@@ -48,7 +49,7 @@ const AboutSection: React.FC = () => {
                     <stat.icon className="w-8 h-8 text-warm-50" />
                   </div>
                   <div className="text-3xl font-bold text-stone-800 mb-1">
-                    {stat.value}
+                    {language === 'fa' ? toPersianNumbers(stat.value) : stat.value}
                   </div>
                   <div className="text-sm text-stone-600 font-medium font-persian">
                     {stat.label}

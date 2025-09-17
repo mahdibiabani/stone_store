@@ -6,6 +6,7 @@ import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
 import ConfirmationModal from './ConfirmationModal';
 import LanguageToggle from './LanguageToggle';
+import { formatPrice, formatQuantity } from '../utils/numberFormat';
 
 interface ProfileProps {
     onBack: () => void;
@@ -64,7 +65,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
         const fetchOrders = async () => {
             setOrdersLoading(true);
             try {
-                const userOrders = await getOrders();
+                const userOrders = await getOrders(language);
                 setOrders(userOrders);
             } catch (error) {
                 console.error('Error fetching orders:', error);
@@ -76,7 +77,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
         if (user) {
             fetchOrders();
         }
-    }, [user, getOrders]);
+    }, [user, getOrders, language]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -546,7 +547,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                     <div className="lg:col-span-2">
                         <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
                             <h2 className="text-xl font-bold text-stone-800 mb-6 font-persian">
-                                {language === 'fa' ? 'سفارشات قبلی' : 'Order History'}
+                                {t.orders.orderHistory}
                             </h2>
 
                             {ordersLoading ? (
@@ -560,7 +561,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                                 <div className="text-center py-8">
                                     <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
                                     <p className="text-stone-500 font-persian">
-                                        {language === 'fa' ? 'هنوز سفارشی ثبت نکرده‌اید' : 'No orders yet'}
+                                        {t.orders.noOrders}
                                     </p>
                                 </div>
                             ) : (
@@ -576,24 +577,46 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm text-stone-500 font-persian">
-                                                        {language === 'fa' ? 'تاریخ سفارش' : 'Order Date'}
+                                                        {t.orders.orderDate}
                                                     </p>
                                                     <p className="text-stone-800">{formatDate(order.created_at)}</p>
                                                 </div>
                                             </div>
 
+                                            {/* Order Number and Tracking Code */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 p-3 bg-stone-50 rounded-lg">
+                                                <div>
+                                                    <p className="text-sm text-stone-500 font-persian mb-1">
+                                                        {t.orders.orderNumber}
+                                                    </p>
+                                                    <p className="text-stone-800 font-mono text-sm font-semibold">
+                                                        {order.order_number}
+                                                    </p>
+                                                </div>
+                                                {order.tracking_code && (
+                                                    <div>
+                                                        <p className="text-sm text-stone-500 font-persian mb-1">
+                                                            {t.orders.trackingCode}
+                                                        </p>
+                                                        <p className="text-stone-800 font-mono text-sm font-semibold">
+                                                            {order.tracking_code}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             <div className="mb-3">
                                                 <p className="text-sm text-stone-500 font-persian mb-1">
-                                                    {language === 'fa' ? 'محصولات' : 'Items'}
+                                                    {t.orders.items}
                                                 </p>
                                                 <div className="space-y-1">
                                                     {order.items.map((item, index) => (
                                                         <div key={index} className="flex items-center justify-between text-sm">
                                                             <span className="text-stone-700 font-persian">
-                                                                {item.name} × {item.quantity}
+                                                                {item.name} × {formatQuantity(item.quantity, language)}
                                                             </span>
                                                             <span className="text-stone-600">
-                                                                ${(item.price * item.quantity).toFixed(2)}
+                                                                {formatPrice((item.price * item.quantity), language)}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -603,13 +626,13 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                                             <div className="flex items-center justify-between pt-3 border-t border-stone-100">
                                                 <div>
                                                     <p className="text-sm text-stone-500 font-persian">
-                                                        {language === 'fa' ? 'آدرس ارسال' : 'Shipping Address'}
+                                                        {t.orders.shippingAddress}
                                                     </p>
                                                     <p className="text-stone-800 font-persian">{order.shipping_address}</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-lg font-bold text-stone-800">
-                                                        ${order.total.toFixed(2)}
+                                                        {formatPrice(order.total, language)}
                                                     </p>
                                                 </div>
                                             </div>

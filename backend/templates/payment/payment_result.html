@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتیجه پرداخت - Stone Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            direction: rtl;
+        }
+        
+        .result-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .result-header {
+            margin-bottom: 30px;
+        }
+        
+        .success-icon {
+            font-size: 64px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        .error-icon {
+            font-size: 64px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        
+        .result-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .result-header p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .order-details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: right;
+        }
+        
+        .order-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+        
+        .order-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-2px);
+        }
+        
+        .countdown {
+            color: #666;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        {% if success %}
+            <div class="success-icon">✅</div>
+            <div class="result-header">
+                <h1>پرداخت موفقیت‌آمیز بود!</h1>
+                <p>{{ message }}</p>
+            </div>
+            
+            <div class="order-details">
+                <div class="order-row">
+                    <span>شماره سفارش:</span>
+                    <span>{{ order_number }}</span>
+                </div>
+                {% if ref_id %}
+                <div class="order-row">
+                    <span>شماره پیگیری:</span>
+                    <span>{{ ref_id }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div>
+                <a href="http://localhost:5174/payment/success?success=true&order_number={{ order_number }}{% if ref_id %}&ref_id={{ ref_id }}{% endif %}" class="btn btn-primary">
+                    مشاهده سفارشات
+                </a>
+                <a href="http://localhost:5174/" class="btn btn-secondary">
+                    بازگشت به خانه
+                </a>
+            </div>
+        {% else %}
+            <div class="error-icon">❌</div>
+            <div class="result-header">
+                <h1>پرداخت ناموفق</h1>
+                <p>{{ message }}</p>
+            </div>
+            
+            {% if order_number %}
+            <div class="order-details">
+                <div class="order-row">
+                    <span>شماره سفارش:</span>
+                    <span>{{ order_number }}</span>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div>
+                <a href="http://localhost:5174/payment/success?success=false{% if order_number %}&order_number={{ order_number }}{% endif %}" class="btn btn-primary">
+                    بازگشت به سبد خرید
+                </a>
+                <a href="http://localhost:5174/" class="btn btn-secondary">
+                    بازگشت به خانه
+                </a>
+            </div>
+        {% endif %}
+        
+        <div class="countdown">
+            <span id="countdown">5</span> ثانیه تا انتقال خودکار...
+        </div>
+    </div>
+
+    <script>
+        let countdown = 5;
+        const countdownElement = document.getElementById('countdown');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                {% if success %}
+                    const params = new URLSearchParams({
+                        success: 'true',
+                        order_number: '{{ order_number }}',
+                        {% if ref_id %}ref_id: '{{ ref_id }}'{% endif %}
+                    });
+                    window.location.href = `http://localhost:5174/payment/success?${params.toString()}`;
+                {% else %}
+                    const params = new URLSearchParams({
+                        success: 'false',
+                        {% if order_number %}order_number: '{{ order_number }}'{% endif %}
+                    });
+                    window.location.href = `http://localhost:5174/payment/success?${params.toString()}`;
+                {% endif %}
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

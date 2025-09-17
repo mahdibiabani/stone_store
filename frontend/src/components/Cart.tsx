@@ -6,6 +6,7 @@ import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
 import ConfirmationModal from './ConfirmationModal';
 import LanguageToggle from './LanguageToggle';
+import { formatPrice, formatPriceWithUnit, formatQuantity } from '../utils/numberFormat';
 
 interface CartProps {
   onBack: () => void;
@@ -19,10 +20,19 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
   const { language } = useLanguage();
   const t = translations[language];
   const { user, logout } = useAuth();
-  const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, checkout, loading } = useCart();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+  const [shippingData, setShippingData] = useState({
+    address: '',
+    city: '',
+    postal_code: '',
+    phone: ''
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -63,6 +73,44 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
     } finally {
       setIsLoggingOut(false);
     }
+  };
+
+  const handleCheckoutClick = () => {
+    setShowCheckoutForm(true);
+    setCheckoutError('');
+  };
+
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCheckoutLoading(true);
+    setCheckoutError('');
+
+    // Validate required fields
+    if (!shippingData.address || !shippingData.city || !shippingData.postal_code || !shippingData.phone) {
+      setCheckoutError(language === 'fa' ? 'لطفا تمام فیلدهای آدرس را پر کنید' : 'Please fill all address fields');
+      setCheckoutLoading(false);
+      return;
+    }
+
+    try {
+      const result = await checkout(shippingData);
+      
+      if (result.success && result.paymentUrl) {
+        // Redirect to ZarinPal payment page
+        window.location.href = result.paymentUrl;
+      } else {
+        setCheckoutError(result.error || (language === 'fa' ? 'خطا در تسویه حساب' : 'Checkout error'));
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setCheckoutError(language === 'fa' ? 'خطا در تسویه حساب' : 'Checkout error');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleShippingInputChange = (field: string, value: string) => {
+    setShippingData(prev => ({ ...prev, [field]: value }));
   };
 
   // If user is not logged in, show login prompt
@@ -146,7 +194,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                   <ShoppingCart className="w-6 h-6" />
                   {getCartItemsCount() > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">
-                      {getCartItemsCount()}
+                      {formatQuantity(getCartItemsCount(), language)}
                     </span>
                   )}
                 </button>
@@ -303,7 +351,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                   <ShoppingCart className="w-6 h-6" />
                   {getCartItemsCount() > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">
-                      {getCartItemsCount()}
+                      {formatQuantity(getCartItemsCount(), language)}
                     </span>
                   )}
                 </button>
@@ -463,7 +511,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
               {t.cart.title}
             </h1>
             <p className="text-stone-600 mt-2 font-persian">
-              {getCartItemsCount()} {language === 'fa' ? 'محصول در سبد خرید' : 'items in cart'}
+              {formatQuantity(getCartItemsCount(), language)} {language === 'fa' ? 'محصول در سبد خرید' : 'items in cart'}
             </p>
           </div>
 
@@ -507,25 +555,21 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                         {/* Quantity Controls */}
                         <div className="flex items-center space-x-3 rtl:space-x-reverse">
                           <button
-                            onClick={() => updateQuantity(
-                              item.stone.id,
-                              item.quantity - 1,
-                              item.selectedFinish,
-                              item.selectedThickness
+                            onClick={() => item.id && updateQuantity(
+                              item.id,
+                              item.quantity - 1
                             )}
                             className="w-10 h-10 bg-neutral-200 rounded-xl flex items-center justify-center hover:bg-neutral-300 transition-colors"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="text-lg font-semibold text-stone-800 min-w-[2rem] text-center">
-                            {item.quantity}
+                            {formatQuantity(item.quantity, language)}
                           </span>
                           <button
-                            onClick={() => updateQuantity(
-                              item.stone.id,
-                              item.quantity + 1,
-                              item.selectedFinish,
-                              item.selectedThickness
+                            onClick={() => item.id && updateQuantity(
+                              item.id,
+                              item.quantity + 1
                             )}
                             className="w-10 h-10 bg-neutral-200 rounded-xl flex items-center justify-center hover:bg-neutral-300 transition-colors"
                           >
@@ -537,18 +581,14 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                         <div className="flex items-center space-x-4 rtl:space-x-reverse">
                           <div className="text-right rtl:text-left">
                             <p className="text-lg font-bold text-stone-800">
-                              ${(parseInt(item.stone.price?.replace('$', '') || '85') * item.quantity).toFixed(2)}
+                              {formatPrice((parseInt(item.stone.price?.replace('$', '') || '85') * item.quantity), language)}
                             </p>
                             <p className="text-sm text-stone-500">
-                              {item.stone.price}/m² × {item.quantity}
+                              {formatPriceWithUnit(item.stone.price || '$85', language)} × {formatQuantity(item.quantity, language)}
                             </p>
                           </div>
                           <button
-                            onClick={() => removeFromCart(
-                              item.stone.id,
-                              item.selectedFinish,
-                              item.selectedThickness
-                            )}
+                            onClick={() => item.id && removeFromCart(item.id)}
                             className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                           >
                             <Trash2 className="w-5 h-5" />
@@ -579,26 +619,30 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                 <div className="space-y-4">
                   <div className="flex justify-between text-stone-600 font-persian">
                     <span>{language === 'fa' ? 'تعداد اقلام' : 'Items'}</span>
-                    <span>{getCartItemsCount()}</span>
+                    <span>{formatQuantity(getCartItemsCount(), language)}</span>
                   </div>
                   <div className="flex justify-between text-stone-600 font-persian">
                     <span>{t.cart.subtotal}</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{formatPrice(subtotal, language)}</span>
                   </div>
                   <div className="flex justify-between text-stone-600 font-persian">
                     <span>{t.cart.shipping}</span>
-                    <span>{shipping > 0 ? `$${shipping.toFixed(2)}` : (language === 'fa' ? 'رایگان' : 'Free')}</span>
+                    <span>{shipping > 0 ? formatPrice(shipping, language) : t.cart.free}</span>
                   </div>
                   <div className="border-t border-neutral-200 pt-4">
                     <div className="flex justify-between text-xl font-bold text-stone-800 font-persian">
                       <span>{t.cart.grandTotal}</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>{formatPrice(total, language)}</span>
                     </div>
                   </div>
                 </div>
 
-                <button className="w-full bg-stone-800 text-white py-4 rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 mt-6 font-persian">
-                  {t.cart.checkout}
+                <button 
+                  onClick={handleCheckoutClick}
+                  disabled={checkoutLoading || loading}
+                  className="w-full bg-stone-800 text-white py-4 rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 mt-6 font-persian disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {checkoutLoading || loading ? (language === 'fa' ? 'در حال پردازش...' : 'Processing...') : t.cart.checkout}
                 </button>
 
                 <button
@@ -612,6 +656,106 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
           </div>
         </div>
       </div>
+
+      {/* Shipping Form Modal */}
+      {showCheckoutForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-stone-200">
+              <h2 className="text-2xl font-bold text-stone-800 font-persian">
+                {language === 'fa' ? 'اطلاعات ارسال' : 'Shipping Information'}
+              </h2>
+              <button
+                onClick={() => setShowCheckoutForm(false)}
+                className="p-2 text-stone-400 hover:text-stone-600 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleCheckoutSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2 font-persian">
+                  {language === 'fa' ? 'آدرس' : 'Address'}
+                </label>
+                <textarea
+                  value={shippingData.address}
+                  onChange={(e) => handleShippingInputChange('address', e.target.value)}
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all font-persian"
+                  placeholder={language === 'fa' ? 'آدرس کامل خود را وارد کنید' : 'Enter your full address'}
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2 font-persian">
+                  {language === 'fa' ? 'شهر' : 'City'}
+                </label>
+                <input
+                  type="text"
+                  value={shippingData.city}
+                  onChange={(e) => handleShippingInputChange('city', e.target.value)}
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all font-persian"
+                  placeholder={language === 'fa' ? 'شهر' : 'City'}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2 font-persian">
+                  {language === 'fa' ? 'کد پستی' : 'Postal Code'}
+                </label>
+                <input
+                  type="text"
+                  value={shippingData.postal_code}
+                  onChange={(e) => handleShippingInputChange('postal_code', e.target.value)}
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all"
+                  placeholder={language === 'fa' ? 'کد پستی' : 'Postal Code'}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2 font-persian">
+                  {language === 'fa' ? 'شماره تلفن' : 'Phone Number'}
+                </label>
+                <input
+                  type="tel"
+                  value={shippingData.phone}
+                  onChange={(e) => handleShippingInputChange('phone', e.target.value)}
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all"
+                  placeholder={language === 'fa' ? 'شماره تلفن' : 'Phone Number'}
+                  required
+                />
+              </div>
+
+              {checkoutError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-persian">
+                  {checkoutError}
+                </div>
+              )}
+
+              <div className="flex space-x-3 rtl:space-x-reverse pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCheckoutForm(false)}
+                  className="flex-1 bg-neutral-200 text-stone-800 py-3 rounded-lg hover:bg-neutral-300 transition-colors font-persian"
+                >
+                  {language === 'fa' ? 'لغو' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={checkoutLoading}
+                  className="flex-1 bg-stone-800 text-white py-3 rounded-lg hover:bg-stone-700 transition-colors font-persian disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {checkoutLoading ? (language === 'fa' ? 'در حال پردازش...' : 'Processing...') : (language === 'fa' ? 'پرداخت' : 'Pay Now')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Logout Confirmation Modal */}
       <ConfirmationModal

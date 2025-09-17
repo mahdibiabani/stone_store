@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, User, Mail, Building, Phone, Calendar, MapPin, FileText } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { translations } from '../data/translations';
+import { api } from '../services/api';
 
 const QuoteSection: React.FC = () => {
   const { language } = useLanguage();
@@ -18,6 +19,9 @@ const QuoteSection: React.FC = () => {
     notes: ''
   });
 
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -26,11 +30,43 @@ const QuoteSection: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log('Quote request submitted:', formData);
-    alert(language === 'fa' ? 'درخواست شما با موفقیت ارسال شد!' : 'Your quote request has been submitted successfully!');
+    setLoading(true);
+
+    try {
+      await api.quotes.submit({
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        phone: formData.phone,
+        project_type: formData.projectType,
+        project_location: formData.projectLocation,
+        timeline: formData.timeline,
+        notes: formData.notes
+      });
+
+      setSuccess(true);
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        company: '',
+        phone: '',
+        projectType: '',
+        projectLocation: '',
+        timeline: '',
+        notes: ''
+      });
+
+      // Hide success message after 5 seconds
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (error) {
+      console.error('Error submitting quote:', error);
+      alert(language === 'fa' ? 'خطا در ارسال درخواست' : 'Error submitting quote request');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputFields = [
@@ -101,14 +137,25 @@ const QuoteSection: React.FC = () => {
                 />
               </div>
 
+              {/* Success Message */}
+              {success && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-2xl text-center font-persian">
+                  {language === 'fa' ? 'درخواست شما با موفقیت ارسال شد!' : 'Your quote request has been submitted successfully!'}
+                </div>
+              )}
+
               {/* Submit Button */}
               <div className="pt-6">
                 <button
                   type="submit"
-                  className="w-full bg-stone-800 text-white py-4 rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl group flex items-center justify-center transform hover:-translate-y-1 font-persian"
+                  disabled={loading}
+                  className="w-full bg-stone-800 text-white py-4 rounded-2xl hover:bg-stone-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl group flex items-center justify-center transform hover:-translate-y-1 font-persian disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="mr-2 rtl:mr-0 rtl:ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  {t.quote.submit}
+                  {loading 
+                    ? (language === 'fa' ? 'در حال ارسال...' : 'Submitting...')
+                    : t.quote.submit
+                  }
                 </button>
               </div>
             </form>

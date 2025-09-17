@@ -13,7 +13,11 @@ export interface Stone {
     fa: string;
   };
   images: string[];
-  video?: string;
+  videos?: string[];
+  finishes?: string[];
+  thickness?: string[];
+  applications?: string[];
+  specifications?: Record<string, any>;
   technicalData: {
     density: string;
     porosity: string;
@@ -43,6 +47,7 @@ export interface RFQForm {
 }
 
 export interface CartItem {
+  id?: number;
   stone: Stone;
   quantity: number;
   selectedFinish?: string;

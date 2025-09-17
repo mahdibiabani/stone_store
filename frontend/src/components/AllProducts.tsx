@@ -103,8 +103,8 @@ const AllProducts: React.FC<AllProductsProps> = ({ stones, onBack, onViewProduct
                     comparison = a.name[language].localeCompare(b.name[language]);
                     break;
                 case 'price':
-                    const priceA = parseFloat(a.price.replace('$', ''));
-                    const priceB = parseFloat(b.price.replace('$', ''));
+                    const priceA = parseFloat(a.price?.replace('$', '') || '0');
+                    const priceB = parseFloat(b.price?.replace('$', '') || '0');
                     comparison = priceA - priceB;
                     break;
                 case 'category':

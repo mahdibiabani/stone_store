@@ -19,7 +19,11 @@ export const stones: Stone[] = [
       'https://images.pexels.com/photos/6207358/pexels-photo-6207358.jpeg?auto=compress&cs=tinysrgb&w=800',
       'https://images.pexels.com/photos/7764983/pexels-photo-7764983.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
-    video: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+    videos: ['https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'],
+    finishes: ['Polished', 'Honed', 'Brushed'],
+    thickness: ['2cm', '3cm'],
+    applications: ['Interior Walls', 'Countertops', 'Flooring'],
+    specifications: { hardness: 'High', waterAbsorption: 'Low' },
     technicalData: {
       density: '2.7 g/cm³',
       porosity: '0.2%',
@@ -47,6 +51,10 @@ export const stones: Stone[] = [
       'https://images.pexels.com/photos/6207329/pexels-photo-6207329.jpeg?auto=compress&cs=tinysrgb&w=800',
       'https://images.pexels.com/photos/7768197/pexels-photo-7768197.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
+    finishes: ['Natural', 'Filled', 'Honed'],
+    thickness: ['2cm', '3cm', '5cm'],
+    applications: ['Flooring', 'Wall Cladding', 'Exterior Facades'],
+    specifications: { hardness: 'Medium', waterAbsorption: 'Medium' },
     technicalData: {
       density: '2.5 g/cm³',
       porosity: '5%',
@@ -74,6 +82,10 @@ export const stones: Stone[] = [
       'https://images.pexels.com/photos/6207347/pexels-photo-6207347.jpeg?auto=compress&cs=tinysrgb&w=800',
       'https://images.pexels.com/photos/7768198/pexels-photo-7768198.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
+    finishes: ['Polished', 'Honed', 'Leathered'],
+    thickness: ['2cm', '3cm'],
+    applications: ['Countertops', 'Bathroom Vanities', 'Feature Walls'],
+    specifications: { hardness: 'High', waterAbsorption: 'Very Low' },
     technicalData: {
       density: '2.8 g/cm³',
       porosity: '1%',

@@ -1,86 +1,83 @@
 import { useState, useEffect } from 'react';
-import { stones } from '../data/stones';
 import { Stone } from '../types';
+import { api, ApiStone, ApiProject } from '../services/api';
 
-// Mock projects data - you can move this to a separate file later
-const projects = [
-  {
-    id: 1,
-    title: {
-      en: 'Luxury Hotel Lobby',
-      fa: 'لابی هتل لوکس'
-    },
-    description: {
-      en: 'A stunning lobby design featuring premium stone materials and modern architecture.',
-      fa: 'طراحی لابی خیره‌کننده با استفاده از مصالح سنگی ممتاز و معماری مدرن.'
-    },
-    location: {
-      en: 'Tehran, Iran',
-      fa: 'تهران، ایران'
-    },
-    year: '2023',
-    category: {
-      en: 'Commercial',
-      fa: 'تجاری'
-    },
-    stones: ['Royal Onyx', 'Silver Marble'],
-    image: 'https://images.pexels.com/photos/6207358/pexels-photo-6207358.jpeg?auto=compress&cs=tinysrgb&w=800',
-    gallery: [
-      'https://images.pexels.com/photos/6207358/pexels-photo-6207358.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/7764983/pexels-photo-7764983.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    client: {
-      en: 'Grand Hotel Group',
-      fa: 'گروه هتل گرند'
-    },
-    size: {
-      en: '500 sqm',
-      fa: '۵۰۰ متر مربع'
-    },
-    duration: {
-      en: '6 months',
-      fa: '۶ ماه'
-    }
+// Transform API stone to frontend stone format
+const transformApiStone = (apiStone: ApiStone): Stone => ({
+  id: apiStone.id.toString(),
+  name: {
+    en: apiStone.name_en,
+    fa: apiStone.name_fa
   },
-  {
-    id: 2,
-    title: {
-      en: 'Modern Office Building',
-      fa: 'ساختمان اداری مدرن'
-    },
-    description: {
-      en: 'Contemporary office design with sustainable stone materials and innovative architecture.',
-      fa: 'طراحی اداری معاصر با مصالح سنگی پایدار و معماری نوآورانه.'
-    },
-    location: {
-      en: 'Isfahan, Iran',
-      fa: 'اصفهان، ایران'
-    },
-    year: '2022',
-    category: {
-      en: 'Commercial',
-      fa: 'تجاری'
-    },
-    stones: ['Persian Travertine', 'Silver Marble'],
-    image: 'https://images.pexels.com/photos/6207329/pexels-photo-6207329.jpeg?auto=compress&cs=tinysrgb&w=800',
-    gallery: [
-      'https://images.pexels.com/photos/6207329/pexels-photo-6207329.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/7768197/pexels-photo-7768197.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    client: {
-      en: 'Tech Solutions Inc.',
-      fa: 'شرکت راه‌حل‌های فناوری'
-    },
-    size: {
-      en: '1200 sqm',
-      fa: '۱۲۰۰ متر مربع'
-    },
-    duration: {
-      en: '8 months',
-      fa: '۸ ماه'
-    }
+  category: {
+    en: apiStone.category.name_en,
+    fa: apiStone.category.name_fa
+  },
+  description: {
+    en: apiStone.description_en,
+    fa: apiStone.description_fa
+  },
+  price: apiStone.price || '$85',
+  images: apiStone.images.map(img => img.image),
+  videos: apiStone.videos?.map(vid => vid.video) || [],
+  origin: apiStone.origin || 'Iran',
+  finishes: apiStone.finishes,
+  thickness: apiStone.thickness_options,
+  applications: [], // This would need to be added to the backend model
+  specifications: {}, // This would need to be added to the backend model
+  technicalData: {
+    density: 'N/A',
+    porosity: 'N/A',
+    compressiveStrength: 'N/A',
+    flexuralStrength: 'N/A'
   }
-];
+});
+
+// Transform API project to frontend project format
+const transformApiProject = (apiProject: ApiProject): Project => ({
+  id: apiProject.id,
+  title: {
+    en: apiProject.title_en,
+    fa: apiProject.title_fa
+  },
+  description: {
+    en: apiProject.description_en,
+    fa: apiProject.description_fa
+  },
+  location: {
+    en: apiProject.location_en,
+    fa: apiProject.location_fa
+  },
+  year: apiProject.year,
+  category: {
+    en: apiProject.category_en,
+    fa: apiProject.category_fa
+  },
+  stones: apiProject.project_stones.map(ps => ps.stone.name_en),
+  image: apiProject.images[0]?.image || '',
+  gallery: apiProject.images.map(img => img.image),
+  video: apiProject.videos?.[0]?.video,
+  client: apiProject.client_en && apiProject.client_fa ? {
+    en: apiProject.client_en,
+    fa: apiProject.client_fa
+  } : undefined,
+  size: apiProject.size_en && apiProject.size_fa ? {
+    en: apiProject.size_en,
+    fa: apiProject.size_fa
+  } : undefined,
+  duration: apiProject.duration_en && apiProject.duration_fa ? {
+    en: apiProject.duration_en,
+    fa: apiProject.duration_fa
+  } : undefined,
+  challenges: apiProject.challenges_en && apiProject.challenges_fa ? {
+    en: apiProject.challenges_en,
+    fa: apiProject.challenges_fa
+  } : undefined,
+  solutions: apiProject.solutions_en && apiProject.solutions_fa ? {
+    en: apiProject.solutions_en,
+    fa: apiProject.solutions_fa
+  } : undefined
+});
 
 export interface Project {
   id: number;
@@ -130,28 +127,166 @@ export interface Project {
 export const useStone = (id: string) => {
   const [stone, setStone] = useState<Stone | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const foundStone = stones.find(s => s.id === id);
-    setStone(foundStone || null);
-    setLoading(false);
+    const fetchStone = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiStone = await api.stones.getById(parseInt(id));
+        setStone(transformApiStone(apiStone));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch stone');
+        setStone(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchStone();
+    }
   }, [id]);
 
-  return { stone, loading };
+  return { stone, loading, error };
 };
 
 export const useProject = (id: string) => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const foundProject = projects.find(p => p.id.toString() === id);
-    setProject(foundProject || null);
-    setLoading(false);
+    const fetchProject = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiProject = await api.projects.getById(parseInt(id));
+        setProject(transformApiProject(apiProject));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch project');
+        setProject(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProject();
+    }
   }, [id]);
 
-  return { project, loading };
+  return { project, loading, error };
 };
 
-export const getAllStones = () => stones;
-export const getAllProjects = () => projects;
+export const useStones = () => {
+  const [stones, setStones] = useState<Stone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStones = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiStones = await api.stones.getAll();
+        setStones(apiStones.map(transformApiStone));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch stones');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStones();
+  }, []);
+
+  return { stones, loading, error };
+};
+
+export const useProjects = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiProjects = await api.projects.getAll();
+        setProjects(apiProjects.map(transformApiProject));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch projects');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  return { projects, loading, error };
+};
+
+export const useFeaturedStones = () => {
+  const [stones, setStones] = useState<Stone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFeaturedStones = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiStones = await api.stones.getFeatured();
+        setStones(apiStones.map(transformApiStone));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch featured stones');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedStones();
+  }, []);
+
+  return { stones, loading, error };
+};
+
+export const useFeaturedProjects = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFeaturedProjects = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiProjects = await api.projects.getFeatured();
+        setProjects(apiProjects.map(transformApiProject));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch featured projects');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedProjects();
+  }, []);
+
+  return { projects, loading, error };
+};
+
+// Legacy functions for backward compatibility
+export const getAllStones = () => {
+  console.warn('getAllStones is deprecated, use useStones hook instead');
+  return [];
+};
+
+export const getAllProjects = () => {
+  console.warn('getAllProjects is deprecated, use useProjects hook instead');
+  return [];
+};

@@ -6,6 +6,7 @@ import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
 import { Stone } from '../types';
 import Header from './Header';
+import { formatPriceWithUnit, formatQuantity } from '../utils/numberFormat';
 
 interface ProductDetailProps {
   stone: Stone;
@@ -78,7 +79,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
                   alt={stone.name[language]}
                   className="w-full h-full object-cover"
                 />
-                {stone.video && (
+                {stone.videos && stone.videos.length > 0 && (
                   <button
                     onClick={() => setShowVideo(true)}
                     className="absolute top-4 right-4 rtl:right-auto rtl:left-4 bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-all shadow-lg"
@@ -120,7 +121,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
                   {stone.category[language]}
                 </p>
                 <p className="text-3xl font-bold text-stone-800">
-                  {stone.price}/m²
+                  {formatPriceWithUnit(stone.price || '$85', language)}
                 </p>
               </div>
 
@@ -183,7 +184,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
                       <Minus className="w-5 h-5" />
                     </button>
                     <span className="text-xl font-semibold text-stone-800 min-w-[3rem] text-center">
-                      {quantity}
+                      {formatQuantity(quantity, language)}
                     </span>
                     <button
                       onClick={() => setQuantity(quantity + 1)}
@@ -246,7 +247,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
           </div>
 
           {/* Video Modal */}
-          {showVideo && stone.video && (
+          {showVideo && stone.videos && stone.videos.length > 0 && (
             <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
               <div className="relative bg-white rounded-4xl overflow-hidden max-w-4xl w-full">
                 <button
@@ -256,7 +257,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
                   <X className="w-6 h-6" />
                 </button>
                 <video
-                  src={stone.video}
+                  src={stone.videos[0]}
                   controls
                   autoPlay
                   className="w-full aspect-video"

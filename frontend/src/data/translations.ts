@@ -82,7 +82,17 @@ export const translations = {
       grandTotal: 'Grand Total',
       checkout: 'Checkout',
       remove: 'Remove',
-      update: 'Update'
+      update: 'Update',
+      free: 'Free'
+    },
+    orders: {
+      orderNumber: 'Order Number',
+      trackingCode: 'Tracking Code',
+      orderHistory: 'Order History',
+      orderDate: 'Order Date',
+      items: 'Items',
+      shippingAddress: 'Shipping Address',
+      noOrders: 'No orders yet'
     }
   },
   fa: {
@@ -143,7 +153,17 @@ export const translations = {
       grandTotal: 'مبلغ نهایی',
       checkout: 'تسویه حساب',
       remove: 'حذف',
-      update: 'بروزرسانی'
+      update: 'بروزرسانی',
+      free: 'رایگان'
+    },
+    orders: {
+      orderNumber: 'شماره سفارش',
+      trackingCode: 'کد پیگیری',
+      orderHistory: 'سفارشات قبلی',
+      orderDate: 'تاریخ سفارش',
+      items: 'محصولات',
+      shippingAddress: 'آدرس ارسال',
+      noOrders: 'هنوز سفارشی ثبت نکرده‌اید'
     },
     about: {
       title: 'درباره پرشین استون نکسوس',

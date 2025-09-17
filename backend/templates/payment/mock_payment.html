@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پرداخت آزمایشی - Stone Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            direction: rtl;
+        }
+        
+        .payment-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .payment-header {
+            margin-bottom: 30px;
+        }
+        
+        .payment-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .payment-header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .order-details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: right;
+        }
+        
+        .order-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+        
+        .order-row:last-child {
+            margin-bottom: 0;
+            border-top: 2px solid #e9ecef;
+            padding-top: 15px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .mock-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 30px;
+            color: #856404;
+        }
+        
+        .payment-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            display: none;
+            color: #666;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="payment-header">
+            <h1>🏪 Stone Store</h1>
+            <p>درگاه پرداخت آزمایشی</p>
+        </div>
+        
+        <div class="order-details">
+            <div class="order-row">
+                <span>شماره سفارش:</span>
+                <span>{{ order_number }}</span>
+            </div>
+            <div class="order-row">
+                <span>توضیحات:</span>
+                <span>{{ description }}</span>
+            </div>
+            <div class="order-row">
+                <span>مبلغ قابل پرداخت:</span>
+                <span>{{ amount|floatformat:0 }} تومان</span>
+            </div>
+        </div>
+        
+        <div class="mock-notice">
+            <strong>⚠️ توجه:</strong> این یک درگاه پرداخت آزمایشی است. هیچ پرداخت واقعی انجام نمی‌شود.
+        </div>
+        
+        <div class="payment-buttons">
+            <button class="btn btn-success" onclick="processPayment(true)">
+                ✅ پرداخت موفق
+            </button>
+            <button class="btn btn-danger" onclick="processPayment(false)">
+                ❌ لغو پرداخت
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            در حال پردازش پرداخت...
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        function processPayment(success) {
+            const loading = document.getElementById('loading');
+            const buttons = document.querySelector('.payment-buttons');
+            
+            // Show loading
+            buttons.style.display = 'none';
+            loading.style.display = 'block';
+            
+            // Simulate payment processing delay
+            setTimeout(() => {
+                const authority = '{{ authority }}';
+                const status = success ? 'OK' : 'NOK';
+                const callbackUrl = `{{ callback_url }}?Authority=${authority}&Status=${status}`;
+                
+                // Redirect to callback
+                window.location.href = callbackUrl;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
