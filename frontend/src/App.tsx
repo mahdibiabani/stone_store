@@ -128,6 +128,13 @@ function App() {
     setCurrentView(previousView);
   };
 
+  const handleHomeClick = () => {
+    setCurrentView('home');
+    setSelectedProduct(null);
+    setSelectedProject(null);
+    setPreviousView('home');
+  };
+
   if (currentView === 'product' && selectedProduct) {
     return <ProductDetail
       stone={selectedProduct}
@@ -135,6 +142,7 @@ function App() {
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
     />;
   }
 
@@ -144,6 +152,7 @@ function App() {
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
     />;
   }
 
@@ -154,6 +163,7 @@ function App() {
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
     />;
   }
 
@@ -164,6 +174,7 @@ function App() {
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
     />;
   }
 
@@ -174,6 +185,7 @@ function App() {
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
     />;
   }
 
@@ -187,6 +199,7 @@ function App() {
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
+      onHomeClick={handleHomeClick}
     />;
   }
 
@@ -196,6 +209,7 @@ function App() {
         onCartClick={handleCartClick}
         onProfileClick={handleProfileClick}
         onLoginClick={handleLoginClick}
+        onHomeClick={handleHomeClick}
       />
       <div id="hero">
         <Hero />

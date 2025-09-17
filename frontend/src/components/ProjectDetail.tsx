@@ -54,9 +54,10 @@ interface ProjectDetailProps {
     onCartClick?: () => void;
     onProfileClick?: () => void;
     onLoginClick?: () => void;
+    onHomeClick?: () => void;
 }
 
-const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onCartClick, onProfileClick, onLoginClick }) => {
+const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
     const { language } = useLanguage();
     const [selectedImage, setSelectedImage] = useState(0);
     const [showVideo, setShowVideo] = useState(false);
@@ -70,6 +71,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onCartCl
                 onCartClick={onCartClick || (() => { })}
                 onProfileClick={onProfileClick}
                 onLoginClick={onLoginClick}
+                onHomeClick={onHomeClick}
             />
             <div className="py-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

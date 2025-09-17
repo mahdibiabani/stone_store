@@ -11,9 +11,10 @@ interface HeaderProps {
   onCartClick: () => void;
   onProfileClick?: () => void;
   onLoginClick?: () => void;
+  onHomeClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginClick }) => {
+const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -77,7 +78,10 @@ const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginCli
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
+          <button 
+            onClick={onHomeClick}
+            className="flex items-center space-x-3 rtl:space-x-reverse hover:opacity-80 transition-opacity"
+          >
             <div className="bg-stone-800 p-2 rounded-lg">
               <Mountain className="w-6 h-6 text-warm-50" />
             </div>
@@ -89,7 +93,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick, onProfileClick, onLoginCli
                 {language === 'fa' ? 'کیفیت برتر زندگی' : 'A Higher Quality of Living'}
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 rtl:space-x-reverse">

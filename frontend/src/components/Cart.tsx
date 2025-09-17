@@ -12,9 +12,10 @@ interface CartProps {
   onCartClick?: () => void;
   onProfileClick?: () => void;
   onLoginClick?: () => void;
+  onHomeClick?: () => void;
 }
 
-const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLoginClick }) => {
+const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
   const { language } = useLanguage();
   const t = translations[language];
   const { user, logout } = useAuth();
@@ -84,7 +85,10 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                   </span>
                 </button>
 
-                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                <button 
+                  onClick={onHomeClick}
+                  className="flex items-center space-x-3 rtl:space-x-reverse hover:opacity-80 transition-opacity"
+                >
                   <div className="bg-stone-800 p-2 rounded-lg">
                     <Mountain className="w-6 h-6 text-warm-50" />
                   </div>
@@ -96,7 +100,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                       {language === 'fa' ? 'کیفیت برتر زندگی' : 'A Higher Quality of Living'}
                     </p>
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* Center - Cart Title */}
@@ -201,7 +205,10 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                   </span>
                 </button>
 
-                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                <button 
+                  onClick={onHomeClick}
+                  className="flex items-center space-x-3 rtl:space-x-reverse hover:opacity-80 transition-opacity"
+                >
                   <div className="bg-stone-800 p-2 rounded-lg">
                     <Mountain className="w-6 h-6 text-warm-50" />
                   </div>
@@ -213,7 +220,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                       {language === 'fa' ? 'کیفیت برتر زندگی' : 'A Higher Quality of Living'}
                     </p>
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* Center - Cart Title */}

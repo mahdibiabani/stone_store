@@ -13,9 +13,10 @@ interface ProductDetailProps {
   onCartClick?: () => void;
   onProfileClick?: () => void;
   onLoginClick?: () => void;
+  onHomeClick?: () => void;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClick, onProfileClick, onLoginClick }) => {
+const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const { addToCart } = useCart();
@@ -50,6 +51,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ stone, onBack, onCartClic
         onCartClick={onCartClick || (() => { })}
         onProfileClick={onProfileClick}
         onLoginClick={onLoginClick}
+        onHomeClick={onHomeClick}
       />
       <div className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
