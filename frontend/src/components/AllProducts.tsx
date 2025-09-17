@@ -6,6 +6,7 @@ import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
 import { Stone } from '../types';
+import ConfirmationModal from './ConfirmationModal';
 import LanguageToggle from './LanguageToggle';
 import ProductCard from './ProductCard';
 
@@ -29,6 +30,8 @@ const AllProducts: React.FC<AllProductsProps> = ({ onBack, onViewProduct, onCart
     const [sortBy, setSortBy] = useState<'name' | 'price' | 'category'>('name');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Scroll to top when component mounts
@@ -59,9 +62,21 @@ const AllProducts: React.FC<AllProductsProps> = ({ onBack, onViewProduct, onCart
         }
     };
 
-    const handleLogout = async () => {
-        await logout();
+    const handleLogout = () => {
+        setShowLogoutConfirm(true);
         setIsProfileDropdownOpen(false);
+    };
+
+    const handleLogoutConfirm = async () => {
+        setIsLoggingOut(true);
+        try {
+            await logout();
+            setShowLogoutConfirm(false);
+        } catch (error) {
+            console.error('Error during logout:', error);
+        } finally {
+            setIsLoggingOut(false);
+        }
     };
 
     // Get unique categories
@@ -165,7 +180,7 @@ const AllProducts: React.FC<AllProductsProps> = ({ onBack, onViewProduct, onCart
 
                                 {/* Profile Dropdown */}
                                 {isProfileDropdownOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
+                                    <div className={`absolute ${language === 'fa' ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50`}>
                                         {user ? (
                                             <>
                                                 <div className="px-4 py-2 border-b border-stone-100">
@@ -360,6 +375,19 @@ const AllProducts: React.FC<AllProductsProps> = ({ onBack, onViewProduct, onCart
                     )}
                 </div>
             </div>
+
+            {/* Logout Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={handleLogoutConfirm}
+                title={language === 'fa' ? 'تأیید خروج' : 'Confirm Logout'}
+                message={language === 'fa' ? 'آیا مطمئن هستید که می‌خواهید از حساب کاربری خود خارج شوید؟' : 'Are you sure you want to logout from your account?'}
+                confirmText={language === 'fa' ? 'خروج' : 'Logout'}
+                cancelText={language === 'fa' ? 'لغو' : 'Cancel'}
+                confirmButtonClass="bg-red-600 hover:bg-red-700"
+                isLoading={isLoggingOut}
+            />
         </div>
     );
 };

@@ -232,7 +232,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
 
                                     {/* Profile Dropdown */}
                                     {isProfileDropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
+                                        <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
                                             <button
                                                 onClick={handleProfileClick}
                                                 className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center space-x-2 rtl:space-x-reverse"
@@ -338,7 +338,7 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
 
                                 {/* Profile Dropdown */}
                                 {isProfileDropdownOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
+                                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
                                         {user ? (
                                             <>
                                                 <div className="px-4 py-2 border-b border-stone-100">

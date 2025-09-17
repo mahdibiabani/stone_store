@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
 import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
+import ConfirmationModal from './ConfirmationModal';
 import LanguageToggle from './LanguageToggle';
 
 interface CartProps {
@@ -19,6 +20,8 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
   const { user, logout } = useAuth();
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount } = useCart();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -44,9 +47,21 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
     }
   };
 
-  const handleLogoutFromDropdown = async () => {
-    await logout();
+  const handleLogoutFromDropdown = () => {
+    setShowLogoutConfirm(true);
     setIsProfileDropdownOpen(false);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setShowLogoutConfirm(false);
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   // If user is not logged in, show login prompt
@@ -590,6 +605,19 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogoutConfirm}
+        title={language === 'fa' ? 'تأیید خروج' : 'Confirm Logout'}
+        message={language === 'fa' ? 'آیا مطمئن هستید که می‌خواهید از حساب کاربری خود خارج شوید؟' : 'Are you sure you want to logout from your account?'}
+        confirmText={language === 'fa' ? 'خروج' : 'Logout'}
+        cancelText={language === 'fa' ? 'لغو' : 'Cancel'}
+        confirmButtonClass="bg-red-600 hover:bg-red-700"
+        isLoading={isLoggingOut}
+      />
     </div>
   );
 };
