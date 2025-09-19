@@ -10,13 +10,14 @@ import { formatPrice, formatPriceWithUnit, formatQuantity } from '../utils/numbe
 
 interface CartProps {
   onBack: () => void;
+  onContinueShopping: () => void;
   onCartClick?: () => void;
   onProfileClick?: () => void;
   onLoginClick?: () => void;
   onHomeClick?: () => void;
 }
 
-const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
+const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
   const { language } = useLanguage();
   const t = translations[language];
   const { user, logout } = useAuth();
@@ -437,7 +438,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                 {t.cart.empty}
               </h2>
               <button
-                onClick={onBack}
+                onClick={onContinueShopping}
                 className="bg-stone-800 text-white px-8 py-3 rounded-2xl hover:bg-stone-700 transition-all font-persian"
               >
                 {t.cart.continueShopping}
@@ -727,7 +728,7 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
                 </button>
 
                 <button
-                  onClick={onBack}
+                  onClick={onContinueShopping}
                   className="w-full bg-neutral-200 text-stone-800 py-3 rounded-2xl hover:bg-neutral-300 transition-all duration-300 font-semibold mt-4 font-persian"
                 >
                   {t.cart.continueShopping}

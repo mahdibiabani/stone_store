@@ -300,6 +300,10 @@ function CartPage() {
     navigate(-1);
   };
 
+  const handleContinueShopping = () => {
+    navigate('/products');
+  };
+
   const handleCartClick = () => {
     if (!user) {
       navigate('/login');
@@ -323,6 +327,7 @@ function CartPage() {
   return (
     <Cart
       onBack={handleBack}
+      onContinueShopping={handleContinueShopping}
       onCartClick={handleCartClick}
       onProfileClick={handleProfileClick}
       onLoginClick={handleLoginClick}
