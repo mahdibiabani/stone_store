@@ -278,6 +278,19 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
             </div>
           </div>
         </div>
+        
+        {/* Logout Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogoutConfirm}
+          title={language === 'fa' ? 'تأیید خروج' : 'Confirm Logout'}
+          message={language === 'fa' ? 'آیا مطمئن هستید که می‌خواهید از حساب کاربری خود خارج شوید؟' : 'Are you sure you want to logout from your account?'}
+          confirmText={language === 'fa' ? 'خروج' : 'Logout'}
+          cancelText={language === 'fa' ? 'لغو' : 'Cancel'}
+          confirmButtonClass="bg-red-600 hover:bg-red-700"
+          isLoading={isLoggingOut}
+        />
       </div>
     );
   }
@@ -432,6 +445,19 @@ const Cart: React.FC<CartProps> = ({ onBack, onCartClick, onProfileClick, onLogi
             </div>
           </div>
         </div>
+        
+        {/* Logout Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogoutConfirm}
+          title={language === 'fa' ? 'تأیید خروج' : 'Confirm Logout'}
+          message={language === 'fa' ? 'آیا مطمئن هستید که می‌خواهید از حساب کاربری خود خارج شوید؟' : 'Are you sure you want to logout from your account?'}
+          confirmText={language === 'fa' ? 'خروج' : 'Logout'}
+          cancelText={language === 'fa' ? 'لغو' : 'Cancel'}
+          confirmButtonClass="bg-red-600 hover:bg-red-700"
+          isLoading={isLoggingOut}
+        />
       </div>
     );
   }
