@@ -13,7 +13,7 @@ interface CartContextType {
     getCartTotal: () => number;
     getCartItemsCount: () => number;
     refreshCart: () => Promise<void>;
-    checkout: (shippingData: { address: string; city: string; postal_code: string; phone: string }) => Promise<{ success: boolean; paymentUrl?: string; error?: string }>;
+    checkout: (shippingData: { address: string; city: string; postal_code: string; phone: string; payment_type?: string }) => Promise<{ success: boolean; paymentUrl?: string; error?: string }>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -257,7 +257,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         return cartItems.reduce((total, item) => total + item.quantity, 0);
     };
 
-    const checkout = async (shippingData: { address: string; city: string; postal_code: string; phone: string }): Promise<{ success: boolean; paymentUrl?: string; error?: string }> => {
+    const checkout = async (shippingData: { address: string; city: string; postal_code: string; phone: string; payment_type?: string }): Promise<{ success: boolean; paymentUrl?: string; error?: string }> => {
         if (!user) {
             return { success: false, error: 'کاربر وارد نشده است' }; // Persian: User not logged in
         }

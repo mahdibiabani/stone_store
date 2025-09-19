@@ -213,6 +213,17 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
+    PAYMENT_TYPE_CHOICES = [
+        ('zarinpal', 'ZarinPal'),
+        ('mellat', 'Bank Mellat'),
+        ('parsian', 'Parsian Bank'),
+        ('saderat', 'Bank Saderat'),
+        ('melli', 'Bank Melli'),
+        ('pasargad', 'Pasargad Bank'),
+        ('cash_on_delivery', 'Cash on Delivery'),
+        ('bank_transfer', 'Bank Transfer'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     order_number = models.CharField(max_length=50, unique=True)
     tracking_code = models.CharField(max_length=50, unique=True, blank=True, null=True)
@@ -220,6 +231,7 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     
     # Payment information
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='zarinpal')
     payment_id = models.CharField(max_length=100, blank=True)  # ZarinPal payment ID
     payment_status = models.CharField(max_length=20, default='pending')
     payment_date = models.DateTimeField(null=True, blank=True)

@@ -186,6 +186,7 @@ class CartViewSet(viewsets.ModelViewSet):
         
         # Validate shipping information
         shipping_data = request.data.get('shipping', {})
+        payment_type = request.data.get('payment_type', 'zarinpal')
         required_fields = ['address', 'city', 'postal_code', 'phone']
         for field in required_fields:
             if not shipping_data.get(field):
@@ -208,6 +209,7 @@ class CartViewSet(viewsets.ModelViewSet):
                 order = Order.objects.create(
                     user=request.user,
                     total_amount=total_amount,
+                    payment_type=payment_type,
                     shipping_address=shipping_data['address'],
                     shipping_city=shipping_data['city'],
                     shipping_postal_code=shipping_data['postal_code'],

@@ -84,7 +84,19 @@ export const translations = {
       remove: 'Remove',
       update: 'Update',
       free: 'Free',
-      fillFromProfile: 'Fill from Profile'
+      fillFromProfile: 'Fill from Profile',
+      paymentType: 'Payment Type',
+      selectPaymentType: 'Select Payment Type',
+      paymentGateways: {
+        zarinpal: 'ZarinPal',
+        mellat: 'Bank Mellat',
+        parsian: 'Parsian Bank',
+        saderat: 'Bank Saderat',
+        melli: 'Bank Melli',
+        pasargad: 'Pasargad Bank',
+        cash_on_delivery: 'Cash on Delivery',
+        bank_transfer: 'Bank Transfer'
+      }
     },
     orders: {
       orderNumber: 'Order Number',
@@ -183,7 +195,19 @@ export const translations = {
       remove: 'حذف',
       update: 'بروزرسانی',
       free: 'رایگان',
-      fillFromProfile: 'استفاده از اطلاعات پروفایل'
+      fillFromProfile: 'استفاده از اطلاعات پروفایل',
+      paymentType: 'نوع پرداخت',
+      selectPaymentType: 'انتخاب نوع پرداخت',
+      paymentGateways: {
+        zarinpal: 'زرین‌پال',
+        mellat: 'بانک ملت',
+        parsian: 'بانک پارسیان',
+        saderat: 'بانک صادرات',
+        melli: 'بانک ملی',
+        pasargad: 'بانک پاسارگاد',
+        cash_on_delivery: 'پرداخت در محل',
+        bank_transfer: 'انتقال بانکی'
+      }
     },
     orders: {
       orderNumber: 'شماره سفارش',

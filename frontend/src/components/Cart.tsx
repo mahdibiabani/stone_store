@@ -1,4 +1,4 @@
-import { ArrowLeft, LogOut, Minus, Mountain, Plus, ShoppingBag, ShoppingCart, Trash2, User, UserCircle } from 'lucide-react';
+import { ArrowLeft, LogOut, Minus, Mountain, Plus, ShoppingBag, ShoppingCart, Trash2, User, UserCircle, CreditCard, Banknote, Truck, Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
@@ -28,6 +28,8 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+  const [selectedPaymentType, setSelectedPaymentType] = useState('zarinpal');
+  const [isPaymentDropdownOpen, setIsPaymentDropdownOpen] = useState(false);
   const [shippingData, setShippingData] = useState({
     address: '',
     city: '',
@@ -35,12 +37,64 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
     phone: ''
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const paymentDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Payment gateway options
+  const paymentGateways = [
+    {
+      id: 'zarinpal',
+      name: t.cart.paymentGateways.zarinpal,
+      icon: CreditCard,
+      color: 'bg-green-500',
+      textColor: 'text-green-600'
+    },
+    {
+      id: 'mellat',
+      name: t.cart.paymentGateways.mellat,
+      icon: Building2,
+      color: 'bg-blue-600',
+      textColor: 'text-blue-600'
+    },
+    {
+      id: 'parsian',
+      name: t.cart.paymentGateways.parsian,
+      icon: Building2,
+      color: 'bg-orange-500',
+      textColor: 'text-orange-600'
+    },
+    {
+      id: 'melli',
+      name: t.cart.paymentGateways.melli,
+      icon: Building2,
+      color: 'bg-red-600',
+      textColor: 'text-red-600'
+    },
+    {
+      id: 'cash_on_delivery',
+      name: t.cart.paymentGateways.cash_on_delivery,
+      icon: Truck,
+      color: 'bg-yellow-500',
+      textColor: 'text-yellow-600'
+    },
+    {
+      id: 'bank_transfer',
+      name: t.cart.paymentGateways.bank_transfer,
+      icon: Banknote,
+      color: 'bg-purple-600',
+      textColor: 'text-purple-600'
+    }
+  ];
+
+  const selectedGateway = paymentGateways.find(gateway => gateway.id === selectedPaymentType) || paymentGateways[0];
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileDropdownOpen(false);
+      }
+      if (paymentDropdownRef.current && !paymentDropdownRef.current.contains(event.target as Node)) {
+        setIsPaymentDropdownOpen(false);
       }
     };
 
@@ -121,7 +175,10 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
     }
 
     try {
-      const result = await checkout(shippingData);
+      const result = await checkout({
+        ...shippingData,
+        payment_type: selectedPaymentType
+      });
       
       if (result.success && result.paymentUrl) {
         // Redirect to ZarinPal payment page
@@ -715,6 +772,64 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
                     <div className="flex justify-between text-xl font-bold text-stone-800 font-persian">
                       <span>{t.cart.grandTotal}</span>
                       <span>{formatPrice(total, language)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Payment Type Selection */}
+                  <div className="border-t border-neutral-200 pt-4">
+                    <label className="block text-sm font-semibold text-stone-700 mb-3 font-persian">
+                      {t.cart.paymentType}
+                    </label>
+                    <div className="relative" ref={paymentDropdownRef}>
+                      {/* Selected Payment Gateway Display */}
+                      <button
+                        onClick={() => setIsPaymentDropdownOpen(!isPaymentDropdownOpen)}
+                        className="w-full flex items-center justify-between p-4 border border-neutral-200 rounded-2xl hover:border-stone-300 focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all bg-white"
+                      >
+                        <div className="flex items-center">
+                          <div className={`w-8 h-8 ${selectedGateway.color} rounded-lg flex items-center justify-center mr-3 rtl:mr-0 rtl:ml-3`}>
+                            <selectedGateway.icon className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="font-persian text-sm font-medium text-stone-700">
+                            {selectedGateway.name}
+                          </span>
+                        </div>
+                        {isPaymentDropdownOpen ? (
+                          <ChevronUp className="w-5 h-5 text-stone-500" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-stone-500" />
+                        )}
+                      </button>
+
+                      {/* Dropdown Options */}
+                      {isPaymentDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-2xl shadow-lg z-10 max-h-64 overflow-y-auto">
+                          {paymentGateways.map((gateway) => (
+                            <button
+                              key={gateway.id}
+                              onClick={() => {
+                                setSelectedPaymentType(gateway.id);
+                                setIsPaymentDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center p-4 hover:bg-neutral-50 transition-all first:rounded-t-2xl last:rounded-b-2xl ${
+                                selectedPaymentType === gateway.id ? 'bg-stone-50 border-l-4 border-l-stone-600' : ''
+                              }`}
+                            >
+                              <div className={`w-8 h-8 ${gateway.color} rounded-lg flex items-center justify-center mr-3 rtl:mr-0 rtl:ml-3`}>
+                                <gateway.icon className="w-5 h-5 text-white" />
+                              </div>
+                              <span className={`font-persian text-sm font-medium ${
+                                selectedPaymentType === gateway.id ? 'text-stone-800' : 'text-stone-700'
+                              }`}>
+                                {gateway.name}
+                              </span>
+                              {selectedPaymentType === gateway.id && (
+                                <div className="ml-auto rtl:ml-0 rtl:mr-auto w-2 h-2 bg-stone-600 rounded-full"></div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

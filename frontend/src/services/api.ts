@@ -395,11 +395,20 @@ export const cartApi = {
     city: string;
     postal_code: string;
     phone: string;
+    payment_type?: string;
   }) => {
     const response = await fetch(`${API_BASE_URL}/cart/checkout/`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ shipping: shippingData })
+      body: JSON.stringify({ 
+        shipping: {
+          address: shippingData.address,
+          city: shippingData.city,
+          postal_code: shippingData.postal_code,
+          phone: shippingData.phone
+        },
+        payment_type: shippingData.payment_type || 'zarinpal'
+      })
     });
     return handleResponse(response);
   }
