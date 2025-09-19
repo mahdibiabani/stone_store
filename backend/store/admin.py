@@ -77,9 +77,12 @@ class StoneAdmin(admin.ModelAdmin):
     name_display.short_description = 'Name'
     
     def price_display(self, obj):
+        if obj.price is None:
+            return '-'
+        price_str = '${:,.2f}'.format(float(obj.price))
         return format_html(
-            '<span style="color: #28a745; font-weight: bold;">${:,.2f}</span>',
-            obj.price
+            '<span style="color: #28a745; font-weight: bold;">{}</span>',
+            price_str
         )
     price_display.short_description = 'Price'
 
