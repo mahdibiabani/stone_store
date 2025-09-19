@@ -30,6 +30,8 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
   const [checkoutError, setCheckoutError] = useState('');
   const [selectedPaymentType, setSelectedPaymentType] = useState('zarinpal');
   const [isPaymentDropdownOpen, setIsPaymentDropdownOpen] = useState(false);
+  const [dropdownDirection, setDropdownDirection] = useState<'down' | 'up'>('down');
+  const [dropdownMaxHeight, setDropdownMaxHeight] = useState(256);
   const [shippingData, setShippingData] = useState({
     address: '',
     city: '',
@@ -87,7 +89,27 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
 
   const selectedGateway = paymentGateways.find(gateway => gateway.id === selectedPaymentType) || paymentGateways[0];
 
-  // Close dropdown when clicking outside
+  // Function to check available space and set dropdown direction
+  const checkDropdownDirection = () => {
+    if (paymentDropdownRef.current) {
+      const rect = paymentDropdownRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const dropdownHeight = paymentGateways.length * 64 + 16; // Approximate height
+      const spaceBelow = viewportHeight - rect.bottom - 20; // 20px margin
+      const spaceAbove = rect.top - 20; // 20px margin
+      
+      // Choose direction based on available space
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownDirection('up');
+        setDropdownMaxHeight(Math.min(spaceAbove, 300)); // Max 300px or available space
+      } else {
+        setDropdownDirection('down');
+        setDropdownMaxHeight(Math.min(spaceBelow, 300)); // Max 300px or available space
+      }
+    }
+  };
+
+  // Close dropdown when clicking outside and handle window resize
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -98,11 +120,20 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
       }
     };
 
+    const handleResize = () => {
+      if (isPaymentDropdownOpen) {
+        checkDropdownDirection();
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('resize', handleResize);
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isPaymentDropdownOpen]);
 
   const handleProfileClick = () => {
     setIsProfileDropdownOpen(false);
@@ -782,10 +813,15 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
                     </label>
                     <div className="relative" ref={paymentDropdownRef}>
                       {/* Selected Payment Gateway Display */}
-                      <button
-                        onClick={() => setIsPaymentDropdownOpen(!isPaymentDropdownOpen)}
-                        className="w-full flex items-center justify-between p-4 border border-neutral-200 rounded-2xl hover:border-stone-300 focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all bg-white"
-                      >
+                       <button
+                         onClick={() => {
+                           if (!isPaymentDropdownOpen) {
+                             checkDropdownDirection();
+                           }
+                           setIsPaymentDropdownOpen(!isPaymentDropdownOpen);
+                         }}
+                         className="w-full flex items-center justify-between p-4 border border-neutral-200 rounded-2xl hover:border-stone-300 focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all bg-white"
+                       >
                         <div className="flex items-center">
                           <div className={`w-8 h-8 ${selectedGateway.color} rounded-lg flex items-center justify-center mr-3 rtl:mr-0 rtl:ml-3`}>
                             <selectedGateway.icon className="w-5 h-5 text-white" />
@@ -801,10 +837,17 @@ const Cart: React.FC<CartProps> = ({ onBack, onContinueShopping, onCartClick, on
                         )}
                       </button>
 
-                      {/* Dropdown Options */}
-                      {isPaymentDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-2xl shadow-lg z-10 max-h-64 overflow-y-auto">
-                          {paymentGateways.map((gateway) => (
+                       {/* Dropdown Options */}
+                       {isPaymentDropdownOpen && (
+                         <div 
+                           className={`absolute left-0 right-0 bg-white border border-neutral-200 rounded-2xl shadow-lg z-10 overflow-y-auto ${
+                             dropdownDirection === 'up' 
+                               ? 'bottom-full mb-2' 
+                               : 'top-full mt-2'
+                           }`}
+                           style={{ maxHeight: `${dropdownMaxHeight}px` }}
+                         >
+                           {paymentGateways.map((gateway) => (
                             <button
                               key={gateway.id}
                               onClick={() => {
