@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar, CheckCircle, Clock, Edit3, FileText, LogOut, Mail, MapPin, Mountain, Package, Phone, ShoppingCart, Truck, User, UserCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Edit3, FileText, LogOut, Mail, MapPin, Mountain, Package, Phone, Send, ShoppingCart, Truck, User, UserCircle, XCircle, Building } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Order, useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
@@ -6,7 +6,7 @@ import { useCart } from '../hooks/useCart';
 import { useLanguage } from '../hooks/useLanguage';
 import ConfirmationModal from './ConfirmationModal';
 import LanguageToggle from './LanguageToggle';
-import { formatPrice, formatQuantity } from '../utils/numberFormat';
+import { formatPrice, formatQuantity, formatNumber } from '../utils/numberFormat';
 
 interface ProfileProps {
     onBack: () => void;
@@ -31,6 +31,9 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isOrdersExpanded, setIsOrdersExpanded] = useState(false);
+    const [isQuotesExpanded, setIsQuotesExpanded] = useState(false);
+    const [isQuoteFormExpanded, setIsQuoteFormExpanded] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const [formData, setFormData] = useState({
@@ -38,6 +41,20 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
         phone: user?.phone || '',
         address: user?.address || '',
     });
+
+    const [quoteFormData, setQuoteFormData] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        company: '',
+        phone: user?.phone || '',
+        projectType: '',
+        projectLocation: '',
+        timeline: '',
+        notes: ''
+    });
+
+    const [quoteFormLoading, setQuoteFormLoading] = useState(false);
+    const [quoteFormSuccess, setQuoteFormSuccess] = useState(false);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -60,6 +77,12 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                 phone: user.phone || '',
                 address: user.address || '',
             });
+            setQuoteFormData(prev => ({
+                ...prev,
+                name: user.name || '',
+                email: user.email || '',
+                phone: user.phone || '',
+            }));
         }
     }, [user]);
 
@@ -156,6 +179,61 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
     const handleLogoutFromDropdown = () => {
         setShowLogoutConfirm(true);
         setIsProfileDropdownOpen(false);
+    };
+
+    const handleQuoteFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setQuoteFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleQuoteFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setQuoteFormLoading(true);
+
+        try {
+            // Import api service
+            const { api } = await import('../services/api');
+            
+            await api.quotes.submit({
+                name: quoteFormData.name,
+                email: quoteFormData.email,
+                company: quoteFormData.company,
+                phone: quoteFormData.phone,
+                project_type: quoteFormData.projectType,
+                project_location: quoteFormData.projectLocation,
+                timeline: quoteFormData.timeline,
+                notes: quoteFormData.notes
+            });
+
+            setQuoteFormSuccess(true);
+            
+            // Reset form
+            setQuoteFormData({
+                name: user?.name || '',
+                email: user?.email || '',
+                company: '',
+                phone: user?.phone || '',
+                projectType: '',
+                projectLocation: '',
+                timeline: '',
+                notes: ''
+            });
+
+            // Hide success message after 5 seconds
+            setTimeout(() => setQuoteFormSuccess(false), 5000);
+            
+            // Refresh quotes
+            const userQuotes = await getQuotes();
+            setQuotes(userQuotes);
+        } catch (error) {
+            console.error('Error submitting quote:', error);
+            alert(language === 'fa' ? 'خطا در ارسال درخواست' : 'Error submitting quote request');
+        } finally {
+            setQuoteFormLoading(false);
+        }
     };
 
     const getStatusIcon = (status: string) => {
@@ -561,234 +639,458 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                         </div>
                     </div>
 
-                    {/* Order History */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
-                            <h2 className="text-xl font-bold text-stone-800 mb-6 font-persian">
-                                {t.orders.orderHistory}
-                            </h2>
-
-                            {ordersLoading ? (
-                                <div className="text-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto"></div>
-                                    <p className="text-stone-500 mt-2 font-persian">
-                                        {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
-                                    </p>
+                    {/* Order History and Quote Requests */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Order History - Collapsible */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-stone-200">
+                            <button
+                                onClick={() => setIsOrdersExpanded(!isOrdersExpanded)}
+                                className="w-full p-6 flex items-center justify-between text-left hover:bg-stone-50 transition-colors rounded-t-2xl"
+                            >
+                                <h2 className="text-xl font-bold text-stone-800 font-persian">
+                                    {t.orders.orderHistory}
+                                </h2>
+                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                    <span className="text-sm text-stone-500 font-persian">
+                                        ({formatNumber(orders.length, language)} {language === 'fa' ? 'سفارش' : 'orders'})
+                                    </span>
+                                    {isOrdersExpanded ? (
+                                        <ChevronUp className="w-5 h-5 text-stone-600" />
+                                    ) : (
+                                        <ChevronDown className="w-5 h-5 text-stone-600" />
+                                    )}
                                 </div>
-                            ) : orders.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
-                                    <p className="text-stone-500 font-persian">
-                                        {t.orders.noOrders}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {orders.map((order) => (
-                                        <div key={order.id} className="border border-stone-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                                                    {getStatusIcon(order.status)}
-                                                    <span className="font-medium text-stone-800 font-persian">
-                                                        {getStatusText(order.status)}
-                                                    </span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm text-stone-500 font-persian">
-                                                        {t.orders.orderDate}
-                                                    </p>
-                                                    <p className="text-stone-800">{formatDate(order.created_at)}</p>
-                                                </div>
-                                            </div>
+                            </button>
 
-                                            {/* Order Number and Tracking Code */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 p-3 bg-stone-50 rounded-lg">
-                                                <div>
-                                                    <p className="text-sm text-stone-500 font-persian mb-1">
-                                                        {t.orders.orderNumber}
-                                                    </p>
-                                                    <p className="text-stone-800 font-mono text-sm font-semibold">
-                                                        {order.order_number}
-                                                    </p>
-                                                </div>
-                                                {order.tracking_code && (
-                                                    <div>
-                                                        <p className="text-sm text-stone-500 font-persian mb-1">
-                                                            {t.orders.trackingCode}
-                                                        </p>
-                                                        <p className="text-stone-800 font-mono text-sm font-semibold">
-                                                            {order.tracking_code}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="mb-3">
-                                                <p className="text-sm text-stone-500 font-persian mb-1">
-                                                    {t.orders.items}
-                                                </p>
-                                                <div className="space-y-1">
-                                                    {order.items.map((item, index) => (
-                                                        <div key={index} className="flex items-center justify-between text-sm">
-                                                            <span className="text-stone-700 font-persian">
-                                                                {item.name} × {formatQuantity(item.quantity, language)}
-                                                            </span>
-                                                            <span className="text-stone-600">
-                                                                {formatPrice((item.price * item.quantity), language)}
+                            {isOrdersExpanded && (
+                                <div className="px-6 pb-6">
+                                    {ordersLoading ? (
+                                        <div className="text-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto"></div>
+                                            <p className="text-stone-500 mt-2 font-persian">
+                                                {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
+                                            </p>
+                                        </div>
+                                    ) : orders.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+                                            <p className="text-stone-500 font-persian">
+                                                {t.orders.noOrders}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {orders.map((order) => (
+                                                <div key={order.id} className="border border-stone-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                                            {getStatusIcon(order.status)}
+                                                            <span className="font-medium text-stone-800 font-persian">
+                                                                {getStatusText(order.status)}
                                                             </span>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-stone-500 font-persian">
+                                                                {t.orders.orderDate}
+                                                            </p>
+                                                            <p className="text-stone-800">{formatDate(order.created_at)}</p>
+                                                        </div>
+                                                    </div>
 
-                                            <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-                                                <div>
-                                                    <p className="text-sm text-stone-500 font-persian">
-                                                        {t.orders.shippingAddress}
-                                                    </p>
-                                                    <p className="text-stone-800 font-persian">{order.shipping_address}</p>
+                                                    {/* Order Number and Tracking Code */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 p-3 bg-stone-50 rounded-lg">
+                                                        <div>
+                                                            <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                {t.orders.orderNumber}
+                                                            </p>
+                                                            <p className="text-stone-800 font-mono text-sm font-semibold">
+                                                                {order.order_number}
+                                                            </p>
+                                                        </div>
+                                                        {order.tracking_code && (
+                                                            <div>
+                                                                <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                    {t.orders.trackingCode}
+                                                                </p>
+                                                                <p className="text-stone-800 font-mono text-sm font-semibold">
+                                                                    {order.tracking_code}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="mb-3">
+                                                        <p className="text-sm text-stone-500 font-persian mb-1">
+                                                            {t.orders.items}
+                                                        </p>
+                                                        <div className="space-y-1">
+                                                            {order.items.map((item, index) => (
+                                                                <div key={index} className="flex items-center justify-between text-sm">
+                                                                    <span className="text-stone-700 font-persian">
+                                                                        {item.name} × {formatQuantity(item.quantity, language)}
+                                                                    </span>
+                                                                    <span className="text-stone-600">
+                                                                        {formatPrice((item.price * item.quantity), language)}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between pt-3 border-t border-stone-100">
+                                                        <div>
+                                                            <p className="text-sm text-stone-500 font-persian">
+                                                                {t.orders.shippingAddress}
+                                                            </p>
+                                                            <p className="text-stone-800 font-persian">{order.shipping_address}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-lg font-bold text-stone-800">
+                                                                {formatPrice(order.total, language)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-lg font-bold text-stone-800">
-                                                        {formatPrice(order.total, language)}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             )}
                         </div>
-                    </div>
 
-                    {/* Quote Requests */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
-                            <h2 className="text-xl font-bold text-stone-800 mb-6 font-persian">
-                                {t.quotes.title}
-                            </h2>
-
-                            {quotesLoading ? (
-                                <div className="text-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto"></div>
-                                    <p className="text-stone-500 mt-2 font-persian">
-                                        {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
-                                    </p>
+                        {/* Quote Requests History - Collapsible */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-stone-200">
+                            <button
+                                onClick={() => setIsQuotesExpanded(!isQuotesExpanded)}
+                                className="w-full p-6 flex items-center justify-between text-left hover:bg-stone-50 transition-colors rounded-t-2xl"
+                            >
+                                <h2 className="text-xl font-bold text-stone-800 font-persian">
+                                    {t.quotes.title}
+                                </h2>
+                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                    <span className="text-sm text-stone-500 font-persian">
+                                        ({formatNumber(quotes.length, language)} {language === 'fa' ? 'درخواست' : 'requests'})
+                                    </span>
+                                    {isQuotesExpanded ? (
+                                        <ChevronUp className="w-5 h-5 text-stone-600" />
+                                    ) : (
+                                        <ChevronDown className="w-5 h-5 text-stone-600" />
+                                    )}
                                 </div>
-                            ) : quotes.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <FileText className="w-16 h-16 text-stone-300 mx-auto mb-4" />
-                                    <p className="text-stone-500 font-persian">
-                                        {t.quotes.noQuotes}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {quotes.map((quote) => (
-                                        <div key={quote.id} className="border border-stone-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                                                    <div className={`w-3 h-3 rounded-full ${
-                                                        quote.status === 'pending' ? 'bg-yellow-400' :
-                                                        quote.status === 'in_progress' ? 'bg-blue-400' :
-                                                        quote.status === 'completed' ? 'bg-green-400' :
-                                                        'bg-red-400'
-                                                    }`}></div>
-                                                    <span className="font-medium text-stone-800 font-persian">
-                                                        {t.quotes.status[quote.status as keyof typeof t.quotes.status]}
-                                                    </span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm text-stone-500 font-persian">
-                                                        {t.quotes.requestDate}
-                                                    </p>
-                                                    <p className="text-stone-800">{new Date(quote.created_at).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US')}</p>
-                                                </div>
-                                            </div>
+                            </button>
 
-                                            {/* Quote Details */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 p-3 bg-stone-50 rounded-lg">
-                                                <div>
-                                                    <p className="text-sm text-stone-500 font-persian mb-1">
-                                                        {t.quotes.quoteNumber}
-                                                    </p>
-                                                    <p className="text-stone-800 font-mono text-sm font-semibold">
-                                                        {quote.id}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-stone-500 font-persian mb-1">
-                                                        {t.quotes.projectType}
-                                                    </p>
-                                                    <p className="text-stone-800 font-persian">
-                                                        {quote.project_type}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-stone-500 font-persian mb-1">
-                                                        {t.quotes.projectLocation}
-                                                    </p>
-                                                    <p className="text-stone-800 font-persian">
-                                                        {quote.project_location}
-                                                    </p>
-                                                </div>
-                                                {quote.company && (
-                                                    <div>
-                                                        <p className="text-sm text-stone-500 font-persian mb-1">
-                                                            {t.quotes.company}
-                                                        </p>
-                                                        <p className="text-stone-800 font-persian">
-                                                            {quote.company}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {quote.timeline && (
-                                                <div className="mb-3">
-                                                    <p className="text-sm text-stone-500 font-persian mb-1">
-                                                        {t.quotes.timeline}
-                                                    </p>
-                                                    <p className="text-stone-800 font-persian">
-                                                        {quote.timeline}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            {quote.additional_notes && (
-                                                <div className="mb-3">
-                                                    <p className="text-sm text-stone-500 font-persian mb-1">
-                                                        {t.quotes.notes}
-                                                    </p>
-                                                    <p className="text-stone-800 font-persian">
-                                                        {quote.additional_notes}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            {quote.items && quote.items.length > 0 && (
-                                                <div className="mb-3">
-                                                    <p className="text-sm text-stone-500 font-persian mb-1">
-                                                        {t.quotes.items}
-                                                    </p>
-                                                    <div className="space-y-1">
-                                                        {quote.items.map((item: any, index: number) => (
-                                                            <div key={index} className="flex items-center justify-between text-sm">
-                                                                <span className="text-stone-700 font-persian">
-                                                                    {language === 'fa' ? item.stone.name_fa : item.stone.name_en} × {item.quantity}
-                                                                </span>
-                                                                {item.notes && (
-                                                                    <span className="text-stone-500 text-xs">
-                                                                        {item.notes}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
+                            {isQuotesExpanded && (
+                                <div className="px-6 pb-6">
+                                    {quotesLoading ? (
+                                        <div className="text-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto"></div>
+                                            <p className="text-stone-500 mt-2 font-persian">
+                                                {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
+                                            </p>
                                         </div>
-                                    ))}
+                                    ) : quotes.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <FileText className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+                                            <p className="text-stone-500 font-persian">
+                                                {t.quotes.noQuotes}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {quotes.map((quote) => (
+                                                <div key={quote.id} className="border border-stone-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                                            <div className={`w-3 h-3 rounded-full ${
+                                                                quote.status === 'pending' ? 'bg-yellow-400' :
+                                                                quote.status === 'in_progress' ? 'bg-blue-400' :
+                                                                quote.status === 'completed' ? 'bg-green-400' :
+                                                                'bg-red-400'
+                                                            }`}></div>
+                                                            <span className="font-medium text-stone-800 font-persian">
+                                                                {t.quotes.status[quote.status as keyof typeof t.quotes.status]}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-stone-500 font-persian">
+                                                                {t.quotes.requestDate}
+                                                            </p>
+                                                            <p className="text-stone-800">{new Date(quote.created_at).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US')}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Quote Details */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 p-3 bg-stone-50 rounded-lg">
+                                                        <div>
+                                                            <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                {t.quotes.quoteNumber}
+                                                            </p>
+                                                            <p className="text-stone-800 font-mono text-sm font-semibold">
+                                                                {quote.id}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                {t.quotes.projectType}
+                                                            </p>
+                                                            <p className="text-stone-800 font-persian">
+                                                                {quote.project_type}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                {t.quotes.projectLocation}
+                                                            </p>
+                                                            <p className="text-stone-800 font-persian">
+                                                                {quote.project_location}
+                                                            </p>
+                                                        </div>
+                                                        {quote.company && (
+                                                            <div>
+                                                                <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                    {t.quotes.company}
+                                                                </p>
+                                                                <p className="text-stone-800 font-persian">
+                                                                    {quote.company}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {quote.timeline && (
+                                                        <div className="mb-3">
+                                                            <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                {t.quotes.timeline}
+                                                            </p>
+                                                            <p className="text-stone-800 font-persian">
+                                                                {quote.timeline}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {quote.additional_notes && (
+                                                        <div className="mb-3">
+                                                            <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                {t.quotes.notes}
+                                                            </p>
+                                                            <p className="text-stone-800 font-persian">
+                                                                {quote.additional_notes}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {quote.items && quote.items.length > 0 && (
+                                                        <div className="mb-3">
+                                                            <p className="text-sm text-stone-500 font-persian mb-1">
+                                                                {t.quotes.items}
+                                                            </p>
+                                                            <div className="space-y-1">
+                                                                {quote.items.map((item: any, index: number) => (
+                                                                    <div key={index} className="flex items-center justify-between text-sm">
+                                                                        <span className="text-stone-700 font-persian">
+                                                                            {language === 'fa' ? item.stone.name_fa : item.stone.name_en} × {item.quantity}
+                                                                        </span>
+                                                                        {item.notes && (
+                                                                            <span className="text-stone-500 text-xs">
+                                                                                {item.notes}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* New Quote Request Form - Collapsible */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-stone-200">
+                            <button
+                                onClick={() => setIsQuoteFormExpanded(!isQuoteFormExpanded)}
+                                className="w-full p-6 flex items-center justify-between text-left hover:bg-stone-50 transition-colors rounded-t-2xl"
+                            >
+                                <h2 className="text-xl font-bold text-stone-800 font-persian">
+                                    {language === 'fa' ? 'درخواست قیمت جدید' : 'New Quote Request'}
+                                </h2>
+                                {isQuoteFormExpanded ? (
+                                    <ChevronUp className="w-5 h-5 text-stone-600" />
+                                ) : (
+                                    <ChevronDown className="w-5 h-5 text-stone-600" />
+                                )}
+                            </button>
+
+                            {isQuoteFormExpanded && (
+                                <div className="px-6 pb-6">
+                                    <form onSubmit={handleQuoteFormSubmit} className="space-y-6">
+                                        {/* Form Fields Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                    {t.quote.name} <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-500" />
+                                                    <input
+                                                        type="text"
+                                                        name="name"
+                                                        value={quoteFormData.name}
+                                                        onChange={handleQuoteFormChange}
+                                                        required
+                                                        className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300 font-persian"
+                                                        placeholder={t.quote.name}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                    {t.quote.email} <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-500" />
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value={quoteFormData.email}
+                                                        onChange={handleQuoteFormChange}
+                                                        required
+                                                        className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300 font-persian"
+                                                        placeholder={t.quote.email}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                    {t.quote.company} <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <Building className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-500" />
+                                                    <input
+                                                        type="text"
+                                                        name="company"
+                                                        value={quoteFormData.company}
+                                                        onChange={handleQuoteFormChange}
+                                                        required
+                                                        className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300 font-persian"
+                                                        placeholder={t.quote.company}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                    {t.quote.phone}
+                                                </label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-500" />
+                                                    <input
+                                                        type="tel"
+                                                        name="phone"
+                                                        value={quoteFormData.phone}
+                                                        onChange={handleQuoteFormChange}
+                                                        className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300"
+                                                        placeholder={t.quote.phone}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                    {t.quote.projectType} <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <FileText className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-500" />
+                                                    <input
+                                                        type="text"
+                                                        name="projectType"
+                                                        value={quoteFormData.projectType}
+                                                        onChange={handleQuoteFormChange}
+                                                        required
+                                                        className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300 font-persian"
+                                                        placeholder={t.quote.projectType}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                    {t.quote.projectLocation} <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <MapPin className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-500" />
+                                                    <input
+                                                        type="text"
+                                                        name="projectLocation"
+                                                        value={quoteFormData.projectLocation}
+                                                        onChange={handleQuoteFormChange}
+                                                        required
+                                                        className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300 font-persian"
+                                                        placeholder={t.quote.projectLocation}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2 md:col-span-2">
+                                                <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                    {t.quote.timeline}
+                                                </label>
+                                                <div className="relative">
+                                                    <Calendar className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-500" />
+                                                    <input
+                                                        type="text"
+                                                        name="timeline"
+                                                        value={quoteFormData.timeline}
+                                                        onChange={handleQuoteFormChange}
+                                                        className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300 font-persian"
+                                                        placeholder={t.quote.timeline}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Additional Notes */}
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-semibold text-stone-700 font-persian">
+                                                {t.quote.notes}
+                                            </label>
+                                            <textarea
+                                                name="notes"
+                                                value={quoteFormData.notes}
+                                                onChange={handleQuoteFormChange}
+                                                rows={4}
+                                                className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-300 resize-none font-persian"
+                                                placeholder={t.quote.notes}
+                                            />
+                                        </div>
+
+                                        {/* Success Message */}
+                                        {quoteFormSuccess && (
+                                            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-center font-persian">
+                                                {language === 'fa' ? 'درخواست شما با موفقیت ارسال شد!' : 'Your quote request has been submitted successfully!'}
+                                            </div>
+                                        )}
+
+                                        {/* Submit Button */}
+                                        <div className="pt-4">
+                                            <button
+                                                type="submit"
+                                                disabled={quoteFormLoading}
+                                                className="w-full bg-stone-800 text-white py-3 rounded-lg hover:bg-stone-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl group flex items-center justify-center font-persian disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <Send className="mr-2 rtl:mr-0 rtl:ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                                {quoteFormLoading 
+                                                    ? (language === 'fa' ? 'در حال ارسال...' : 'Submitting...')
+                                                    : t.quote.submit
+                                                }
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             )}
                         </div>
