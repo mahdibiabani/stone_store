@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar, CheckCircle, Clock, Edit3, LogOut, Mail, MapPin, Mountain, Package, Phone, ShoppingCart, Truck, User, UserCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle, Clock, Edit3, FileText, LogOut, Mail, MapPin, Mountain, Package, Phone, ShoppingCart, Truck, User, UserCircle, XCircle } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Order, useAuth } from '../contexts/AuthContext';
 import { translations } from '../data/translations';
@@ -17,7 +17,7 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, onLoginClick, onHomeClick }) => {
-    const { user, updateProfile, getOrders, logout } = useAuth();
+    const { user, updateProfile, getOrders, getQuotes, logout } = useAuth();
     const { language } = useLanguage();
     const t = translations[language];
     const { getCartItemsCount } = useCart();
@@ -26,6 +26,8 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState<Order[]>([]);
     const [ordersLoading, setOrdersLoading] = useState(true);
+    const [quotes, setQuotes] = useState<any[]>([]);
+    const [quotesLoading, setQuotesLoading] = useState(true);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -74,10 +76,23 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
             }
         };
 
+        const fetchQuotes = async () => {
+            setQuotesLoading(true);
+            try {
+                const userQuotes = await getQuotes();
+                setQuotes(userQuotes);
+            } catch (error) {
+                console.error('Error fetching quotes:', error);
+            } finally {
+                setQuotesLoading(false);
+            }
+        };
+
         if (user) {
             fetchOrders();
+            fetchQuotes();
         }
-    }, [user, getOrders, language]);
+    }, [user, getOrders, getQuotes, language]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -639,6 +654,139 @@ const Profile: React.FC<ProfileProps> = ({ onBack, onCartClick, onProfileClick, 
                                                     </p>
                                                 </div>
                                             </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Quote Requests */}
+                    <div className="lg:col-span-2">
+                        <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                            <h2 className="text-xl font-bold text-stone-800 mb-6 font-persian">
+                                {t.quotes.title}
+                            </h2>
+
+                            {quotesLoading ? (
+                                <div className="text-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto"></div>
+                                    <p className="text-stone-500 mt-2 font-persian">
+                                        {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
+                                    </p>
+                                </div>
+                            ) : quotes.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <FileText className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+                                    <p className="text-stone-500 font-persian">
+                                        {t.quotes.noQuotes}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {quotes.map((quote) => (
+                                        <div key={quote.id} className="border border-stone-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                                    <div className={`w-3 h-3 rounded-full ${
+                                                        quote.status === 'pending' ? 'bg-yellow-400' :
+                                                        quote.status === 'in_progress' ? 'bg-blue-400' :
+                                                        quote.status === 'completed' ? 'bg-green-400' :
+                                                        'bg-red-400'
+                                                    }`}></div>
+                                                    <span className="font-medium text-stone-800 font-persian">
+                                                        {t.quotes.status[quote.status as keyof typeof t.quotes.status]}
+                                                    </span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm text-stone-500 font-persian">
+                                                        {t.quotes.requestDate}
+                                                    </p>
+                                                    <p className="text-stone-800">{new Date(quote.created_at).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US')}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Quote Details */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 p-3 bg-stone-50 rounded-lg">
+                                                <div>
+                                                    <p className="text-sm text-stone-500 font-persian mb-1">
+                                                        {t.quotes.quoteNumber}
+                                                    </p>
+                                                    <p className="text-stone-800 font-mono text-sm font-semibold">
+                                                        {quote.id}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-stone-500 font-persian mb-1">
+                                                        {t.quotes.projectType}
+                                                    </p>
+                                                    <p className="text-stone-800 font-persian">
+                                                        {quote.project_type}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-stone-500 font-persian mb-1">
+                                                        {t.quotes.projectLocation}
+                                                    </p>
+                                                    <p className="text-stone-800 font-persian">
+                                                        {quote.project_location}
+                                                    </p>
+                                                </div>
+                                                {quote.company && (
+                                                    <div>
+                                                        <p className="text-sm text-stone-500 font-persian mb-1">
+                                                            {t.quotes.company}
+                                                        </p>
+                                                        <p className="text-stone-800 font-persian">
+                                                            {quote.company}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {quote.timeline && (
+                                                <div className="mb-3">
+                                                    <p className="text-sm text-stone-500 font-persian mb-1">
+                                                        {t.quotes.timeline}
+                                                    </p>
+                                                    <p className="text-stone-800 font-persian">
+                                                        {quote.timeline}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {quote.additional_notes && (
+                                                <div className="mb-3">
+                                                    <p className="text-sm text-stone-500 font-persian mb-1">
+                                                        {t.quotes.notes}
+                                                    </p>
+                                                    <p className="text-stone-800 font-persian">
+                                                        {quote.additional_notes}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {quote.items && quote.items.length > 0 && (
+                                                <div className="mb-3">
+                                                    <p className="text-sm text-stone-500 font-persian mb-1">
+                                                        {t.quotes.items}
+                                                    </p>
+                                                    <div className="space-y-1">
+                                                        {quote.items.map((item: any, index: number) => (
+                                                            <div key={index} className="flex items-center justify-between text-sm">
+                                                                <span className="text-stone-700 font-persian">
+                                                                    {language === 'fa' ? item.stone.name_fa : item.stone.name_en} × {item.quantity}
+                                                                </span>
+                                                                {item.notes && (
+                                                                    <span className="text-stone-500 text-xs">
+                                                                        {item.notes}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

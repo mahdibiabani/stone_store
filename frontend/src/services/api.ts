@@ -130,6 +130,7 @@ export interface ApiOrder {
 
 export interface ApiQuote {
   id: number;
+  user?: number;
   name: string;
   email: string;
   company: string;
@@ -137,9 +138,10 @@ export interface ApiQuote {
   project_type: string;
   project_location: string;
   timeline?: string;
-  notes?: string;
-  status: 'pending' | 'reviewed' | 'quoted' | 'accepted' | 'rejected';
+  additional_notes?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   items?: Array<{
+    id: number;
     stone: ApiStone;
     quantity: number;
     notes: string;
@@ -276,6 +278,13 @@ export const authApi = {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify(profileData)
+    });
+    return handleResponse(response);
+  },
+
+  getQuotes: async (): Promise<ApiQuote[]> => {
+    const response = await fetch(`${API_BASE_URL}/users/quotes/`, {
+      headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
@@ -423,7 +432,7 @@ export const quotesApi = {
     project_type: string;
     project_location: string;
     timeline?: string;
-    notes?: string;
+    additional_notes?: string;
     items?: Array<{
       stone_id: number;
       quantity: number;
@@ -432,12 +441,26 @@ export const quotesApi = {
   }) => {
     const response = await fetch(`${API_BASE_URL}/quotes/submit_quote/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         ...quoteData,
         project_type: quoteData.project_type,
         project_location: quoteData.project_location
       })
+    });
+    return handleResponse(response);
+  },
+
+  getAll: async (): Promise<ApiQuote[]> => {
+    const response = await fetch(`${API_BASE_URL}/quotes/`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  getById: async (id: number): Promise<ApiQuote> => {
+    const response = await fetch(`${API_BASE_URL}/quotes/${id}/`, {
+      headers: getAuthHeaders()
     });
     return handleResponse(response);
   }

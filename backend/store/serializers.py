@@ -275,11 +275,11 @@ class QuoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quote
         fields = [
-            'id', 'name', 'email', 'company', 'phone', 'project_type', 
+            'id', 'user', 'name', 'email', 'company', 'phone', 'project_type', 
             'project_location', 'timeline', 'additional_notes', 'status',
             'items', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'status', 'created_at', 'updated_at']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

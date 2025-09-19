@@ -102,6 +102,25 @@ export const translations = {
         delivered: 'Delivered',
         cancelled: 'Cancelled'
       }
+    },
+    quotes: {
+      title: 'Quote Requests',
+      noQuotes: 'No quote requests yet',
+      quoteNumber: 'Quote #',
+      requestDate: 'Request Date',
+      projectType: 'Project Type',
+      projectLocation: 'Project Location',
+      timeline: 'Timeline',
+      company: 'Company',
+      phone: 'Phone',
+      notes: 'Additional Notes',
+      items: 'Requested Items',
+      status: {
+        pending: 'Pending Review',
+        in_progress: 'In Progress',
+        completed: 'Quote Provided',
+        cancelled: 'Cancelled'
+      }
     }
   },
   fa: {
@@ -180,6 +199,25 @@ export const translations = {
         processing: 'در حال پردازش',
         shipped: 'ارسال شده',
         delivered: 'تحویل داده شده',
+        cancelled: 'لغو شده'
+      }
+    },
+    quotes: {
+      title: 'درخواست‌های قیمت',
+      noQuotes: 'هنوز درخواست قیمتی ثبت نکرده‌اید',
+      quoteNumber: 'درخواست شماره',
+      requestDate: 'تاریخ درخواست',
+      projectType: 'نوع پروژه',
+      projectLocation: 'محل پروژه',
+      timeline: 'زمان‌بندی',
+      company: 'شرکت',
+      phone: 'تلفن',
+      notes: 'توضیحات اضافی',
+      items: 'اقلام درخواستی',
+      status: {
+        pending: 'در انتظار بررسی',
+        in_progress: 'در حال بررسی',
+        completed: 'قیمت ارائه شده',
         cancelled: 'لغو شده'
       }
     },

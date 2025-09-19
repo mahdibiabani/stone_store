@@ -263,9 +263,9 @@ class QuoteViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # If user is authenticated, associate with user
         if self.request.user.is_authenticated:
-            # You might want to add user field to Quote model
-            pass
-        serializer.save()
+            serializer.save(user=self.request.user)
+        else:
+            serializer.save()
     
     @action(detail=False, methods=['post'])
     def submit_quote(self, request):
@@ -275,7 +275,11 @@ class QuoteViewSet(viewsets.ModelViewSet):
         
         quote_serializer = self.get_serializer(data=quote_data)
         if quote_serializer.is_valid():
-            quote = quote_serializer.save()
+            # Associate with user if authenticated
+            if request.user.is_authenticated:
+                quote = quote_serializer.save(user=request.user)
+            else:
+                quote = quote_serializer.save()
             
             # Create quote items
             for item_data in items_data:
@@ -310,6 +314,13 @@ class UserViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def quotes(self, request):
+        """Get current user's quotes"""
+        quotes = Quote.objects.filter(user=request.user).order_by('-created_at')
+        serializer = QuoteSerializer(quotes, many=True)
+        return Response(serializer.data)
 
 
 class UserRegistrationViewSet(viewsets.ModelViewSet):

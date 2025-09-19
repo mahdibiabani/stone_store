@@ -176,6 +176,7 @@ class Quote(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quotes', null=True, blank=True)
     name = models.CharField(max_length=200)
     email = models.EmailField()
     company = models.CharField(max_length=200, blank=True)

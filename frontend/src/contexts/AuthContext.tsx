@@ -38,6 +38,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>;
     getOrders: (language?: 'en' | 'fa') => Promise<Order[]>;
+    getQuotes: () => Promise<any[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -272,6 +273,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
+    const getQuotes = async (): Promise<any[]> => {
+        if (!user) {
+            return [];
+        }
+
+        try {
+            const apiQuotes = await api.auth.getQuotes();
+            return apiQuotes;
+        } catch (error) {
+            console.error('Error fetching quotes:', error);
+            return [];
+        }
+    };
+
     const value: AuthContextType = {
         user,
         loading,
@@ -280,6 +295,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         updateProfile,
         getOrders,
+        getQuotes,
     };
 
     return (
