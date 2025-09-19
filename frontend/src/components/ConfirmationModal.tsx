@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface ConfirmationModalProps {
     isOpen: boolean;
@@ -32,9 +33,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         }
     };
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
             onClick={handleBackdropClick}
         >
             <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 transform transition-all">
@@ -84,7 +85,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
